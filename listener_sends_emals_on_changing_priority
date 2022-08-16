@@ -1,0 +1,14 @@
+string Body = "Hi" + ",<br><br/> Operational bug priority has been changed to P1 (Blocker). Have a look. <br><br/>"+
+"<a href=\"https://jira.yyy.com/browse/" + key+"\">"+key+"</a>" + "<br><br/>Best regards<br><br/>";
+
+JFieldChange [] changes = lastIssueChanges(key);
+if(project == "PROJECT" && issueType == "Operational Bug") {
+    for (JFieldChange change in changes) {
+        if (change.field == "priority" and (change.oldValString != change.newValString)) {
+        if (key.priority == "Blocker (P1)") {
+            sendHtmlEmail({"user@mail.com", "user2@mail.com"}, "Priority has been changed to P1", Body);
+            }
+        
+        }
+    }
+}
