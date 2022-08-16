@@ -1,0 +1,19 @@
+string issue_priority = "Blocker (P1)";
+string issue_description = getInput("customfield_27931");
+string issue_summary = getInput("customfield_27930");
+	
+string DesignTask = createIssue(
+		"PROJECT",
+		"",
+		"Design Task",
+		issue_summary,
+		issue_priority,
+		issue_description,
+		"",
+		"",
+		"",
+		"",
+		{} 
+	   );
+%DesignTask%.customfield_10530 = customfield_10530;
+linkIssue(DesignTask.key, key, "Blocking");
