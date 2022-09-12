@@ -1,0 +1,55 @@
+string[][][][] domainMatrix = {{{"@volllo.com"}, {"ivan.contractor", "peter", "alex"}, {"ivan.contractor"}, {"UPINTS BE Users"}},
+                                {{"@myofficel.com"}, {"ivan.contractor", "peter", "alex"}, {"ivan.contractor"}, {"UPINTS NL Users"}},
+                                {{"@imagroup.be"}, {"amamam.contractor", "peter", "alex"}, {"amamam.contractor"}, {"UPINTS BE Users"}},
+                                {{"@istaffo.be"}, {"amamam.contractor", "peter", "alex"}, {"amamam.contractor"}, {"UPINTS BE Users"}},
+                                {{"@io.ch"}, {"ann.contractor", "peter", "alex"}, {"ann.contractor"}, {"UPINTS CH Users"}},
+                                {{"@io.net"}, {"ann.contractor", "peter", "alex"}, {"ann.contractor"}, {"UPINTS CH Users"}},
+                                {{"@UPINTS.pl"}, {"alau", "peter", "alex"}, {"alau"}, {"UPINTS PL Users"}}};
+                                
+string[][][][] roleMatrix = {{{"General Read/Write Access"}, {"mathew", "alex", "peter", "szymon"}, {"alex"}, {"UPINTS Users"}},
+                                {{"General Read Access"}, {"mathew", "alex", "peter", "szymon"}, {"alex"}, {"UPINTS Access"}},
+                                {{"Administrators"}, {"mathew", "alex", "peter", "szymon"}, {"alex"}, {"UPINTS Administrator"}},
+                                {{"Country Project Manager"}, {"mathew", "alex", "peter", "szymon"}, {"alex"}, {"UPINTS CountryPM"}},
+                                {{"Product Owner"}, {"mathew", "alex", "peter", "szymon"}, {"alex"}, {"UPINTS ProductOwner"}},
+                                {{"Business Analyst"}, {"mathew", "alex", "peter", "szymon"}, {"alex"}, {"UPINTS BusinessAnalyst"}},
+                                {{"Scrum Master"}, {"kate", "mathew", "alex", "peter", "szymon"}, {"kate"}, {"UPINTS ScrumMaster"}},
+                                {{"Primary Technical Lead"}, {"kate", "mathew", "alex", "peter", "szymon"}, {"kate"}, {"UPINTS Primary Technical Lead"}},
+                                {{"Technical Lead"}, {"kate", "mathew", "alex", "peter", "szymon"}, {"kate"}, {"UPINTS Primary Technical Lead"}},
+                                {{"Developers"}, {"kate", "mathew", "alex", "peter", "szymon"}, {"kate"}, {"UPINTS Developers"}},
+                                {{"Integrators"}, {"kate", "mathew", "alex", "peter", "szymon"}, {"kate"}, {"UPINTS Integrators"}},
+                                {{"Release Manager"}, {"kate", "mathew", "alex", "peter", "szymon"}, {"kate"}, {"UPINTS ReleaseManager"}},
+                                {{"Test Manager"}, {"kate", "mathew", "alex", "peter", "szymon"}, {"kate"}, {"UPINTS Testers"}},
+                                {{"Testers"}, {"kate", "mathew", "alex", "peter", "szymon"}, {"kate"}, {"UPINTS Testers"}}};
+                                
+                                
+string[] userDomains = "";
+for(string serviceRecipient in customfield_20833){
+    string sr = "\\@(.*)";
+    string userEmail = userEmailAddress(serviceRecipient);
+    string userDomain = matchText(userEmail, sr);
+    userDomains += userDomain;
+}
+
+boolean isCountryUser = false;
+
+if(customfield_12239 == "Jira project" && customfield_12341 == "UPINTS" || customfield_12341 == "UP IN THE SKY"){
+    for(number i = 0; i < size(domainMatrix); i = i + 1){
+       if(userDomains[0] == domainMatrix[i][0]){
+            assignee = domainMatrix[i][2];
+            customfield_21143 = domainMatrix[i][1]; //Participants
+            customfield_24430 = domainMatrix[i][1]; //Approvers
+            customfield_20830 = domainMatrix[i][3]; //Group name
+            isCountryUser = true;
+       }
+    }
+    if(!isCountryUser){
+        for(number i = 0; i < size(roleMatrix); i = i + 1){
+           if(customfield_29532[0] == roleMatrix[i][0]){
+                assignee = roleMatrix[i][2];
+                customfield_21143 = roleMatrix[i][1];    //Participants
+                customfield_24430 = roleMatrix[i][1]; //Approvers
+                customfield_20830 = roleMatrix[i][3]; //Group name
+           }
+        }
+    }
+}
