@@ -1,0 +1,10 @@
+string projectFrom = "SPARTA";
+string projectTo = "NEWPROJECT";
+string [] componentsName = admGetProjectComponents(projectFrom);
+runnerLog(componentsName);
+for(string name in componentsName){
+    runnerLog("name: " + name);
+    JComponent comp = admGetProjectComponent(projectFrom, name);
+    runnerLog("comp: " + comp);
+    admAddProjectComponent(projectTo, comp.name, comp.description, comp.lead, comp.defaultAssignee);
+}
