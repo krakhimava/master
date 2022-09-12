@@ -1,0 +1,20 @@
+string groupNameCustomField = customfield_20800;
+string [] serviceRecipientsArray = customfield_20033;
+
+if (type == "AR" && customfield_11111 == "UPINTS" || customfield_11111 == "UP IN THE SKY"){
+for(string userNameFromKey in serviceRecipientsArray){
+    string serviceRecipientInTheArray = sql("Jira_database", "select lower_user_name from app_user where LOWER(user_key) = ?",toLower(userNameFromKey));
+    HttpRequest request;
+    request.headers += authHeader;
+    request.headers += httpCreateHeader("Content-Type", "application/json");
+    string restApiEnfPointToLGIcrowd = "https://crowd.com/crowd/rest/usermanagement/1/group/user/direct?groupname="+urlEncode(groupNameCustomField);
+    string restApiEnfPointToLGIcrowdjson = "{\"name\":\""+serviceRecipientInTheArray+"\"}";
+    runnerLog(restApiEnfPointToLGIcrowdjson);
+    string result = httpPost(restApiEnfPointToLGIcrowd,request,restApiEnfPointToLGIcrowdjson); 
+    runnerLog(result);
+}
+
+string AutoComment = "Account/s from the 'Service recipients' list have been added to \"" + groupNameCustomField + "\" group.<br><br/>" +
+                    "Synchronization to JIRA takes 15-20 minutes.<br><br/>" ;
+addComment(key, currentUser(), AutoComment);
+}
