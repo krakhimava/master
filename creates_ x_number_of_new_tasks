@@ -1,0 +1,20 @@
+string [] issue_component = getInput("component");
+string cmp;
+runAs("MY_BOT");
+for (cmp in issue_component){
+string CloneIssue = createIssue(
+		"SPARTA",//project key
+		"",//parent key
+		"Task",//issue type
+		"[" + cmp + "] " + key.summary,//summary
+		key.priority,//priority
+		key.description,//description
+		cmp,
+		"",// due date   
+		"",// estimate
+		"",// security level
+		""
+	   );
+cmp = "";
+linkIssue(CloneIssue, key, "Issue split");
+}
