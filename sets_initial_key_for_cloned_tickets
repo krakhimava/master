@@ -1,0 +1,12 @@
+string mainQuery = "project = ABC and labels = BulkClone_2022_11_02_h11_m7_s58";
+string issueKey;
+for(string issueKey in selectIssues(mainQuery)){   
+    string[] linkedKeys =  allLinkedIssues(issueKey, "TestClone");
+        for(string l in linkedKeys){
+            if(l.type == "Test" && l.project == "POC") { // && issueKey.customfield_32230 == ""){
+                %issueKey%.customfield_32140 = l; //add "Initial Test key" field
+                printInFile("ABC_testMap.txt", l + ";" + issueKey+ ";" +issueKey.id); 
+                runnerLog(l + ";" + issueKey+ ";" +issueKey.id);
+            }
+        }
+}
