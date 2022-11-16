@@ -1,0 +1,40 @@
+if(project == "PONNAT" ||
+project == "PONNCH" ||
+project == "PONNIE" ||
+project == "PONNNL" ||
+project == "PONNPL" ||
+project == "PONNSK" ||
+project == "PONNUK")
+{
+string projectKey=project;
+switch(projectKey)
+{
+case "PONNAT": 
+    %key%.customfield_10222 = "UCPCC AT"; 
+    break;
+    
+case "PONNCH": 
+    %key%.customfield_10222 = "UCPCC CableCom";
+	break;
+	
+case "PONNIE": 
+    %key%.customfield_10222 = "New Media IE"; 
+    break;
+    
+case "PONNNL": 
+    %key%.customfield_10222 = "Giggo"; 
+    break;
+    
+case "PONNPL": 
+    %key%.customfield_10222 = "UCPCC PL";
+	break;
+	
+case "PONNSK": 
+    %key%.customfield_10222 = "UCPCC SK"; 
+    break;
+    
+case "PONNUK": 
+    %key%.customfield_10222 = "New Media UK"; 
+    break;
+}
+}
