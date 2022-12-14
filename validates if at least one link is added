@@ -1,0 +1,13 @@
+boolean isWikiLinkExist = false;
+string message = "Please add at least one wiki link.";
+
+number [] ids = getWebLinksForIssue(key);
+ 
+for(number wlid in ids){
+    string [] getl = getWebLinkById(wlid);
+    if(contains(toLower(getl[1]),"wikiprojects.com")) {
+      isWikiLinkExist = true;
+    }
+}
+
+return isWikiLinkExist, message;
