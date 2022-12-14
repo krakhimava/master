@@ -1,0 +1,37 @@
+if (project == "PRJCT" && issueType == "Booking"){
+    JFieldChange [] changes = lastIssueChanges(key);
+    for(JFieldChange change in changes){
+    if (change.field == "Room" && change.oldValString != change.newValString){
+        if (customfield_28742 == "Cage 1"){
+            assignee = "mamit";
+            }
+            if(customfield_28742 == "Cage 2"){
+            assignee = "mamit";
+            }
+            if(customfield_28742 == "Cage 3"){
+            assignee = "mamit";
+            }
+            if(customfield_28742 == "Testing"){
+            assignee = "mamit";
+            }
+            if(customfield_28742 == "Stability Rack 1"){
+            assignee = "mike.mike";   
+            }
+            if(customfield_28742 == "Stability Rack 2"){
+            assignee = "mike.mike";   
+            }
+            if(customfield_28742 == "Stability Rack 3"){
+            assignee = "mike.mike";   
+            }
+            if(customfield_28742 == "Stability Rack 4"){
+            assignee = "mike.mike";   
+            }
+            if(customfield_28742 == "Stability Rack 5"){
+            assignee = "mike.mike";   
+            }
+            if(customfield_28742 == "Stability Rack 6"){
+            assignee = "mike.mike";   
+            }
+        }
+    }
+};
