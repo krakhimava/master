@@ -1,0 +1,21 @@
+if (project == "PRJCT"){
+string prntEpic = customfield_10530;
+string iss = key;
+
+if(isNotNull(prntEpic) &&  issueInEpic(iss, prntEpic)){
+switch (iss.type) {
+    case "Change Request":
+        %iss%.customfield_10033 = prntEpic.customfield_10033;
+        %iss%.customfield_28760 = prntEpic.customfield_28760;                                           
+        break;
+    case "Story":
+        %iss%.customfield_10033 = prntEpic.customfield_10033;
+        %iss%.customfield_28760 = prntEpic.customfield_28760;                                           
+        break;
+    case "Bug":
+        %iss%.customfield_28760 = prntEpic.customfield_28760;                                           
+    default:
+    print("Epic "+prntEpic+" Epic Child: "+iss+" !!!");
+}      
+}
+}
