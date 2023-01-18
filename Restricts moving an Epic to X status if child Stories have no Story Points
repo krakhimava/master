@@ -1,0 +1,11 @@
+
+string [] jql = selectIssues("issueFunction in issuesInEpics(\"key = "+key+"\") and type = story");
+string iss;
+string errMsg;
+
+for (iss in jql){
+    if(iss.customfield_10182 == 0 || isNull(iss.customfield_10182)){
+       errMsg = "Story "+iss+" has no Story points, transition is not allowed";
+       return false, errMsg;
+    }
+}
