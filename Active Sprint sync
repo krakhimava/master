@@ -1,0 +1,26 @@
+string [] sprntID;
+string act;
+if (key.project == "MAP" && key.type == "Story"){
+               
+
+JFieldChange [] changes = lastIssueChanges(key);
+    for (JFieldChange change in changes) {
+    
+        string [] linkedKeys =  allLinkedIssues(key, "Covers", -1);
+        if(change.field == "Sprint"){ 
+            for(string lkey in linkedKeys){
+                if(lkey.project == "WORLD" && lkey.type == "Story") {
+                 sprntID = replace(change.newVal, ",","|"); //
+                 for (sprnt in sprntID){
+                   act = sprintInfo(sprnt)[6]; 
+                   if(act == "ACTIVE"){
+                    %lkey%.customfield_14832 = sprintName(sprnt); 
+                     }  
+                  }
+                }
+            }
+        }
+    }
+}
+
+
