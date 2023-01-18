@@ -1,0 +1,18 @@
+
+if (reporter != "")
+{
+    string userMail = userEmailAddress(reporter);    
+    if (contains(userMail,"@pume") || contains(userMail,"@LM")) {customfield_10222 = "LM Corporate";}  
+    else {if (contains(userMail,"@staff.pume.be") || contains(userMail,"@pume.be")) {customfield_10222 = "Pume";}
+    else {if (contains(userMail,"@ik.pl")||contains(userMail,"@pume.com.pl")) {customfield_10222 = "Pume PL";}
+    else {if (contains(userMail,"@ik.ch")) {customfield_10222 = "IKO CH";}
+    else {if (contains(userMail,"@ik.ro")) {customfield_10222 = "IKO RO";}
+    else {if (contains(userMail,"@ik.hu")) {customfield_10222 = "IKO HU";}
+    else {if (contains(userMail,"@ik.ie")) {customfield_10222 = "IKO IE";}
+    else {if (contains(userMail,"@ik.nl")) {customfield_10222 = "IKO NL";}
+    else {if (contains(userMail,"@ik.sk")) {customfield_10222 = "IKO SK";}
+    else {if (contains(userMail,"@ik.at")) {customfield_10222 = "IKO AT";}
+    else {if (contains(userMail,"@ik.cz")) {customfield_10222 = "IKO CZ";}
+    else {if (contains(userMail,"@pumeALL")) {customfield_10222 = "Pume ALL";}
+    else {customfield_10222 = "LM Corporate";}
+    }}}}}}}}}}}}
