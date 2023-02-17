@@ -1,0 +1,20 @@
+import com.atlassian.jira.component.ComponentAccessor
+ 
+def issueService = ComponentAccessor.issueService
+def projectManager = ComponentAccessor.projectManager
+def user = ComponentAccessor.jiraAuthenticationContext.getLoggedInUser()
+ 
+def issueInputParameters = issueService.newIssueInputParameters()
+ 
+issueInputParameters.with {
+    projectId = projectManager.getProjectObjByKey("EVEREST").id
+    summary = "Issue created automatically for EVEREST"
+    issueTypeId = "1"
+    reporterId = user.name
+}
+ 
+def validationResult = issueService.validateCreate(user, issueInputParameters)
+assert !validationResult.errorCollection.hasAnyErrors()
+ 
+def issueResult = issueService.create(user, validationResult)
+log.info "Issue created: ${issueResult.issue}"
