@@ -1,0 +1,8 @@
+lfDisable("customfield_12345");
+lfDisable("customfield_76543");
+
+if (isUserInRole(currentUser(), "EVEREST", "Project Managers"))
+{
+    lfEnable("customfield_12345");
+    lfEnable("customfield_76543");
+}
