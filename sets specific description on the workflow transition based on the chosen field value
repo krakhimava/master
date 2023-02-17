@@ -1,0 +1,37 @@
+string issue_description = "h4. Description"+
+                            "\n"+
+                            "Specify problem observed."+
+                            "{_}Preferable - provide screenshots/videos across platforms.{_}"+
+                            "\n"+
+                            "h4. Question"+
+                            "\n"+
+                            "Clearly state your question to the relevant team."+
+                            "\n"+
+                            "h4. Suggestion (optional)"+
+                            "\n"+
+                            "Provide your suggestion with argumentation.";
+                            
+string issue_description_2 = "h4. *Why, What and Where*"+
+                            "\n"+
+                            "Please specify description in *words* instead of *links*. If possible, avoid 'How'. Is the description clear enough to estimate the effort? "+
+                            "\n"+
+                            "h4. *Type of requirement*"+
+                            "\n"+
+                            "Business/Stakeholder/User/Functional"+
+                            "\n"+
+                            "What's the expected output of this task"+
+                            "\n"+
+                            "h4. *Responsible*"+
+                            "\n"+
+                            "Notes";
+
+
+if(project eq getProjectKeyByName("EARTH") && issueType == "Epic" && argv["screen"] == "trans_666") {
+    lfSet("customfield_xxxxx", issue_description);
+    lfSet("customfield_yyyyy", customfield_wwwww);
+}
+if(project eq getProjectKeyByName("EARTH") && issueType == "Epic" && argv["screen"] == "trans_555") {
+    lfSet("customfield_xxxxx", issue_description_2);
+}
+if(project eq getProjectKeyByName("EARTH") && issueType == "Story" && argv["screen"] == "trans_222") {
+    lfSet("customfield_xxxxx", issue_description_2);
