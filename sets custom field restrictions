@@ -1,0 +1,14 @@
+string ISSTYPE;
+string PROJ;
+string ROLE;
+string user = currentUser();
+
+if (isUserInRole(currentUser(), PROJ, "Editors") || ((PROJ == "EVEREST" && type == "Technical User Story"))){ 
+     lfEnable("customfield_13331"); //Requested Release
+     lfEnable("customfield_13933"); //Product roadmap
+     lfEnable("customfield_23333"); // Planned Release
+    } else {
+     lfDisable("customfield_13331"); //Requested Release
+     lfDisable("customfield_13933"); //Product roadmap
+     lfDisable("customfield_23333"); // Planned Release
+    }
