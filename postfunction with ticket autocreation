@@ -1,0 +1,26 @@
+string issue_project = "PRJ";
+string issue_type = "Clarification";
+string epic = key;
+string issue_summary = customfield_27930; //"Issue summary" field
+string issue_priority = "Blocker (P1)"; //priority
+string issue_description = customfield_27931; //"Issue description" field
+string [] epicLink = "customfield_10530|"+epic;
+string po_clarif_label = "Input_Needed";
+string clarif = createIssue(
+                    		issue_project,//project key
+                    		"",//parent key
+                    		issue_type,//issuetype
+                    		issue_summary,//summary
+                    		issue_priority,//priority
+                    		issue_description,//description 
+                    		"",//components 
+                    		"", //due date   
+                    		"",//estimate
+                    		"",//security level
+                    		epicLink
+                    		);
+%clarif%.customfield_10631 = epic.customfield_23630; //"Platform" and "Issue platform"
+%clarif%.labels = epic.customfield_14532 + po_clarif_label; //"Issue labels"
+linkIssue(clarif.key, key, "Blocking");
+epic.customfield_14532 = "";
+
