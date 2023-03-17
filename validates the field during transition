@@ -1,0 +1,17 @@
+//validates a field input on the transition screen, what is chosen on the screen
+string errorMsg = "Fix Build field is mandatory";
+string [] arr = key.customfield_12333;
+if(project == "ARRISEOS" || project == "ARRISDAWN" || project == "HUMAXEOS" || project == "SAMSUNGSELENE" || project == "JWRTEST"){
+if(!hasInput("customfield_12333"))  
+ {
+      return false,  errorMsg;
+ }}
+
+//validates the field input just in transition from a to b status
+string errorMsg = "Fix Build field is mandatory";
+string [] arr = customfield_12333;
+if(project == "ARRISEOS" || project == "ARRISDAWN" || project == "HUMAXEOS" || project == "SAMSUNGSELENE" || project == "JWRTEST"){
+if(arraySize(arr) <= 0)  
+ {
+      return false,  errorMsg;
+ }}
