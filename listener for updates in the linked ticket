@@ -1,0 +1,18 @@
+if (project == "PRJ" ){
+
+    JFieldChange [] changes = lastIssueChanges(key);
+    for (JFieldChange change in changes) {
+            string[] linkedKeys =  allLinkedIssues(key, "Covers", 1); 
+            for(string lkey in linkedKeys){
+                if(lkey.project == "ABC" && lkey.type == "Feature" && 
+                ((priority != lkey.priority) ||
+                (customfield_23236 != lkey.customfield_23236) ||
+                (customfield_27132 != lkey.customfield_27132))){
+                    priority = %lkey%.priority;
+                    customfield_23236 = %lkey%.customfield_23236;
+                    customfield_27132 = %lkey%.customfield_27132;
+                }
+            }
+        }    
+        
+    }
