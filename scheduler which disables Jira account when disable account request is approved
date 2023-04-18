@@ -1,0 +1,18 @@
+string mainQuery = "project = PRJ and 'Request type' = 'Disable account(s)' AND status = Approved AND 'Date to be disabled' <= startOfDay()";
+for(string issueKey in selectIssues(mainQuery))
+{   
+    autotransition(12, issueKey,true,true,true);
+    for(string username in issueKey.UsersPicker){
+        runnerLog(username);
+        string [] results = sql("Jira_database", "select user_name,FIRST_NAME,LAST_NAME,DISPLAY_NAME,EMAIL_ADDRESS from cwd_user where active = 1 and LOWER_USER_NAME in ( select lower_user_name from app_user where user_key=?)", username);
+        runnerLog(results);
+        if(!isNull(results)){
+            string url = "https://crowd.prj.com/crowd/rest/usermanagement/1/user?username=";
+            string json = "{\"name\":\""+results[0]+"\",\"active\":\"false\",\"first-name\":\""+results[1]+"\",\"last-name\":\""+results[2]+"\",\"display-name\":\""+results[3]+"\",\"email\":\""+results[4]+"\"}";
+            runnerLog(json);
+            url+=username;
+            httpPut(url, request, json);
+        }
+    }
+    autotransition(91, issueKey,true,true,true);
+    }
