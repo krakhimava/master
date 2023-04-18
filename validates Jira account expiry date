@@ -1,0 +1,31 @@
+string issuekey=key;
+JUser user;
+
+date today=toJiraDateFormat(currentDate());
+date expirydate=issuekey.customfield_20845; //Account end date
+
+string username=issuekey.customfield_20833;//Service recipients / Users
+
+user=getUser(username);
+runnerLog(user.username);
+runnerLog(user.email);
+
+string userproperty=getUserProperty(user.key, "Expiration Date");
+runnerLog(userproperty);
+date userExpiryDate=parseDate("dd/MMM/yy", userproperty);
+date issueCreatedDate=issuekey.created;
+
+runnerLog(issueCreatedDate);
+runnerLog(issueCreatedDate+"6d");
+runnerLog(today-issueCreatedDate);
+string dueDate=(issueCreatedDate+"6d");
+
+string message="Expiration Date of "+user.username+" user is "+userproperty+" and it needs to be updated first to reject this request. If Expiration Date is not updated till "+dueDate+", it would be deactivated automatically";
+runnerLog(message);
+
+
+if(userExpiryDate-today<=0)
+{
+    // message = "error "+message;
+	return false, message;  
+}
