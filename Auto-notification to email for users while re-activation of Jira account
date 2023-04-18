@@ -1,0 +1,8 @@
+string reqType = customfield_12239; // 'Request type'
+string email = customfield_14860;  //'E-mail address'
+string isskey = key;
+string lineManager = customfield_20838;  //'Line manager e-mail'
+if (reqType == "Re-activate account"){
+sendHtmlEmail(email, "["+isskey+"]: Atlassian account re-activation request has been created","Account re-activation request has just been submitted for this email "+email+".\nTicket refference ID: "+key+".\nYou can contact your line manager by "+lineManager+" for the ticket status update.\n"+"\n"+"Best regards,\nAtlassian Administrators.\nE-mail: atlassian-administrators@atl.com");
+}
+
