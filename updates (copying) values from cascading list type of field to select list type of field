@@ -1,0 +1,26 @@
+//20067 => Gap Analysis (cascading)
+//10032 => Gap Analysis (single)
+
+string jql = "project in (FLOWER, BUTTERFLY and type=Bug and cf[20067] is not EMPTY";
+string[] issues = selectIssues(jql);
+
+for(string iss in issues) {
+    runnerLog(iss + iss.customfield_20067[0]);
+    
+    if(iss.customfield_20067[0]=="Development gap") {
+        %iss%.customfield_10032 = "Development GAP";
+    }
+    else if(iss.customfield_20067[0]=="Documentation/Design Gap") {
+        %iss%.customfield_10032 = "Requirements GAP";
+    }
+    else if(iss.customfield_20067[0]=="Environmental Issue") {
+        %iss%.customfield_10032 = "Environment GAP";
+    }
+    else if(iss.customfield_20067[0]=="Testing Gap") {
+        %iss%.customfield_10032 = "Testing GAP";
+    }
+    
+    runnerLog(iss.customfield_10032);
+}
+
+return issues;
