@@ -1,0 +1,21 @@
+//lfGlobalMessage("Please check the Initiative", "INFO");
+ 
+if (contains(argv["customfield_21824"], "Air")) {
+    lfShow("customfield_11363");
+    lfSet("customfield_11363", "The Initiative is Air");
+ 
+lfHide("customfield_14828");
+lfSet("customfield_14828", "");
+ 
+}
+else if (contains(argv["customfield_21824"], "Flow")) {
+    lfHide("customfield_11363");
+    lfSet("customfield_11363", "");
+ 
+lfShow("customfield_14828");
+lfSet("customfield_14828", "The Initiative is Flow");
+ 
+}
+else {
+    lfHide("customfield_11363");
+    lfSet("customfield_11363", "");
