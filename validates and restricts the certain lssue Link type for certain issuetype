@@ -1,0 +1,10 @@
+string errorMsg = "Issue links of types 'Xray_clones' and 'Covers' for 'Epics' are restcricted";
+string[] links = {"Xray_clones", "Covers"};
+for(string link in links) {
+    string[] linkedIssues = linkedIssues(key, link);
+    for(string issue in linkedIssues) {
+        if(%issue%.issueType == "Epic") {
+           return false, errorMsg;
+        }
+    }
+}
