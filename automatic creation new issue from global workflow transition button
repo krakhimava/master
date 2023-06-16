@@ -1,0 +1,23 @@
+
+string issue_project = "PROJECT";
+string issue_type = "Clarification";
+string epic = customfield_10530; //Epic Link
+string issue_summary = customfield_27930; //"Issue summary" field
+string issue_description = customfield_27931; //"Issue description" field
+string[] epicLink = "customfield_10530|"+epic;
+string clarif = createIssue(
+                    		issue_project,//project key
+                    		"",//parent key
+                    		issue_type,//issuetype
+                    		issue_summary,//summary
+                    		"",//priority
+                    		issue_description,// description 
+                    		"",// components 
+                    		"", // due date   
+                    		"",// estimate
+                    		"",// security level
+                    		epicLink
+                    		);
+%clarif%.customfield_10631 = customfield_23630; //Platform and "Issue platform"
+%clarif%.labels = customfield_14532; //"Issue labels"
+linkIssue(clarif.key, key, "Blocking");
