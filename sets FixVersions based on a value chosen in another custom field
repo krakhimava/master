@@ -1,0 +1,15 @@
+if (customfield_20552 == "R5.02") {
+    fixVersions = {"R5.02", "C-SR163", "R5.03", "C-SR166", "R5.04", "C-SR169", "R5.05", "C-SR172", "R5.06"};
+}
+if (customfield_205522 == "R5.03") {
+    fixVersions = {"R5.03", C-SR166", "R5.04", "C-SR169", "R5.05", "C-SR172", "R5.06"};
+}
+if (customfield_20552 == "R5.04") {
+    fixVersions = {"R5.04", "C-SR169", "R5.05", "C-SR172", "R5.06"};
+}
+if (customfield_20552 == "R5.05") {
+    fixVersions = {"R5.05", "C-SR172", "R5.06"};
+}
+if (customfield_20552 == "R5.06") {
+    fixVersions = {"R5.06"};
+}
