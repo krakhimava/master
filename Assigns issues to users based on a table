@@ -1,0 +1,11 @@
+string sqlSelect;
+string[] sqlResult;
+string user;
+ 
+sqlSelect = "select a tester from team_testers where team = '" + Team + "'";
+sqlResult = sql("testersDB", sqlSelect);
+ 
+user = getElement(sqlResult, 0);
+ 
+if(isNotNull(user))
+  assignee= user;
