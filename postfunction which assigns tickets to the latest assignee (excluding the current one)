@@ -1,0 +1,15 @@
+string project_role = "Developers";
+string project = "PRJ";
+string [] previous_assignees = fieldHistory(key, "assignee");
+ 
+for (number i = size(previous_assignees) - 1; i > 0; i -= 2) {
+    string user = getElement(previous_assignees, i);
+    if(user != assignee && isUserInRole(user, project, project_role)) {
+       assignee = user;
+       return;
+    }
+}
+ 
+if (reporter != assignee && isUserInRole(reporter, project, project_role)) {
+   assignee = reporter;
+}
