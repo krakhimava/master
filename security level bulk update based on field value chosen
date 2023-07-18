@@ -1,0 +1,18 @@
+runAs("A_BOT");
+
+string mainQuery = "project = PRJ AND issuetype = "Feedback" AND created >= 2022-01-01 AND created <= 2022-10-13"; // tickets to be updated
+for(string iss in selectIssues(mainQuery)){
+    
+    string country;
+    string[] countries = {};
+    //boolean allCountries = false;
+    
+    country = iss.customfield_15231; // "Country" custom field
+    
+    if(size(iss.customfield_15231) == 1 && iss.customfield_15231 != "All countries"){
+        string con = getElement(country, 0);
+        string level = "CAPP_" + con;
+        %iss%.securityLevel = level;
+        runnerLog("1. " + iss + ", " + iss.customfield_15231 + ",l=" + iss.securityLevel);
+    }
+}
