@@ -1,0 +1,39 @@
+string crowdUser;
+string useritem;
+string prjKey;
+string deactUser;
+string [] prjRoles;
+
+string [] crowdUsers = {"nick_jonas"};
+
+for (useritem in crowdUsers){
+    string crowdUser = sql("Jira_database", "select lower_user_name from app_user where user_key=?",useritem);
+    runnerLog("sql result is " + crowdUser);
+    string [] userGroups = sql("Jira_database", "select parent_name from cwd_membership where LOWER(child_name) =?",crowdUser);
+    string [] noJirausersList = deleteElement(userGroups, "jira-users");
+    string [] userGroupsRfnd = replace(userGroups, "|", ", ");
+    
+    /* removing from jira project roles block (start) */
+    string removingfromrole="";
+    
+    					  
+    string [] prjs = sql("Jira_database", "SELECT DISTINCT p.pkey as ProjN FROM projectroleactor pra INNER JOIN project p ON p.ID = pra.PID INNER JOIN app_user au ON au.user_key = pra.roletypeparameter INNER JOIN cwd_user u ON u.lower_user_name = au.lower_user_name WHERE u.lower_user_name = ? order by p.pkey", crowdUser);
+    runnerLog("crowduser is " + crowdUser);
+    for (prjKey in prjs){
+        
+        prjRoles = sql("Jira_database","SELECT DISTINCT pr.NAME as roleN FROM projectroleactor pra INNER JOIN projectrole pr ON pr.ID = pra.PROJECTROLEID INNER JOIN app_user au ON au.user_key = pra.roletypeparameter INNER JOIN cwd_user u ON u.lower_user_name = au.lower_user_name WHERE u.lower_user_name = ? AND pra.PID = (select id from project where pkey = '"+prjKey+"')",crowdUser);
+        string [] userRolesRfnd = replace(prjRoles, "|", ", ");  
+        for (string prjRole in prjRoles){
+            
+            removeUserFromProjectRole(crowdUser, prjKey, prjRole);
+            runnerLog("crowduser is " + crowdUser + ", project key is " + prjKey + " and project role is " + prjRole);
+            
+        }
+        
+        removingfromrole = removingfromrole+"Account "+crowdUser+" has been removed from project "+prjKey+" roles "+userRolesRfnd+". \n";
+    }
+    
+    runnerLog("removingfromrole is " + removingfromrole);
+
+
+}
