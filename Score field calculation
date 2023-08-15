@@ -1,0 +1,21 @@
+if(project == "ABD" && issueType == "Business Suggestion"){
+        number Impact = 0;
+        number Confidence = 0;
+        number Ease = 0;
+        
+    JFieldChange [] changes = lastIssueChanges(key);
+    for(JFieldChange change in changes){
+        if((change.field == "Impact" || change.field == "Confidence" || change.field == "Ease") && (change.oldVal != change.newVal)){
+            Impact = key.customfield_30230;
+            Confidence = key.customfield_13234;
+            Ease = key.customfield_11535;
+            
+        if (isNotNull(Impact) && isNotNull(Confidence) && isNotNull(Ease)) {
+        %key%.customfield_21138 = Impact * Confidence * Ease;   
+        }  
+        else {
+            %key%.customfield_21138 = "0";
+            }
+        }
+    }
+}
