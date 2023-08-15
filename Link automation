@@ -1,0 +1,19 @@
+EcoTicket;
+string iss;
+string [] linkIssues;
+
+    JFieldChange [] changes = lastIssueChanges(key);
+    for (JFieldChange change in changes) {
+        if (change.field == "ECO Link" && isNotNull(change.newValString)){
+            EcoTicket = change.newValString;
+                linkIssue(key, EcoTicket, "Breaks");
+    
+        } 
+        if (change.field == "ECO Link" && isNull(change.newValString)){
+        linkIssues=allLinkedIssues(key, "Breaks", 1);
+        iss=change.oldValString;
+        if (elementExists(linkIssues, iss)){
+            unlinkIssue(key, iss, "Breaks");
+        }}
+    }
+        
