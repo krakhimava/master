@@ -1,0 +1,19 @@
+struct Member{
+    string role;
+    string memberName;
+}
+
+string pkey ="ABC";
+string destinationPkey = "XYZ";
+Member [] groupRoles = sql("JiraDB", "SELECT pr.NAME as role, pra.roletypeparameter as memberName FROM public.projectroleactor pra INNER JOIN projectrole pr ON pr.ID = pra.PROJECTROLEID INNER JOIN project p ON p.ID = pra.PID WHERE p.pkey = ? and pra.roletype = 'atlassian-group-role-actor';",pkey);
+
+for(Member group in groupRoles){
+    runnerLog("role = "+ group.role + ", memberName = "+group.memberName);
+    addGroupToProjectRole(group.memberName, destinationPkey, group.role);
+}
+
+Member [] userRoles = sql("JiraDB", "SELECT pr.NAME as role, pra.roletypeparameter as memberName FROM public.projectroleactor pra INNER JOIN projectrole pr ON pr.ID = pra.PROJECTROLEID INNER JOIN project p ON p.ID = pra.PID WHERE p.pkey = ? and pra.roletype = 'atlassian-user-role-actor';",pkey);
+for(Member user in userRoles){
+    runnerLog("role = "+ user.role + ", memberName = "+user.memberName);
+    addUserToProjectRole(user.memberName, destinationPkey, user.role);
+}
