@@ -1,0 +1,28 @@
+ if(project=="PRJ")
+{
+
+
+string issuekey=key;
+//Get all issues which are clone of current
+string [] lI=linkedIssues(issuekey, "Cloners", -1);
+
+//Check is there any clones
+if(size(lI)!=0)
+{
+    for (string item in lI){
+        //get latest comment on issue 
+        JComment lastComment=getLastComment(issuekey);
+        if (!contains(lastComment.text, "copiedfromSI"))
+        {
+        string readyComment="This comment was copied from parrent clone ("+issuekey+"). Author: "+lastComment["author"]+" \n "+lastComment["text"]+"";
+        
+        //copy issue to linked clones
+        if(toLower(lastComment["author"]) neq "aut_bot"){ 
+        addComment(item, "AUT_BOT", readyComment);
+        }
+        }
+    
+     }
+    
+}
+}
