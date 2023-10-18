@@ -1,0 +1,23 @@
+string [] arr = {"STRTUPS", "TSTPRJ"};
+if(elementExists(arr, project)){
+
+if(isNull(customfield_11538) || isNull(customfield_29733) || isNull(customfield_16534)){
+
+string iss = key;
+string [] lnkReslt;
+
+runAs("AUT_BOT");
+
+JFieldChange [] changes  = getFieldChanges(iss, "Link");
+if(size(changes) > 0){
+for(number i = 0; i < size(changes); i = i + 1){
+lnkReslt = changes[i];
+string kkey = lnkReslt[4];
+string six = "This issue created "+kkey;
+if(lnkReslt[6] == six){
+    %iss%.customfield_11538 = kkey;
+    %iss%.customfield_29733 = lnkReslt[0];
+    %iss%.customfield_16534 = lnkReslt[1];
+    break;
+
+}}}}}
