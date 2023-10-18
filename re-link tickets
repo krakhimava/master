@@ -1,0 +1,19 @@
+string iss;
+string [] lnkReslt;
+string [] jql = selectIssues("project in (STRTUPS, TSTPRJ) AND issueFunction in linkedIssuesOf('', created)");
+
+//string [] jql = selectIssues("key = STRTUPS-1072");
+string [] arr;
+string lkey;
+runAs("JAFC_BOT");
+for (iss in jql){
+
+JIssueLink[] jIssueLinks = getIssueLinksDetail(iss);
+for(JIssueLink jIssueLink in jIssueLinks){
+   if(jIssueLink.description == "created by"){
+
+    lkey=jIssueLink.issue;
+    unlinkIssue(lkey, iss, "Defect");
+    linkIssue (iss, lkey, "Defect");
+    lkey = "";
+}}}
