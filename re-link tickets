@@ -5,7 +5,7 @@ string [] jql = selectIssues("project in (STRTUPS, TSTPRJ) AND issueFunction in 
 //string [] jql = selectIssues("key = STRTUPS-1072");
 string [] arr;
 string lkey;
-runAs("JAFC_BOT");
+runAs("AUT_BOT");
 for (iss in jql){
 
 JIssueLink[] jIssueLinks = getIssueLinksDetail(iss);
