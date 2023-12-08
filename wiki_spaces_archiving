@@ -1,0 +1,165 @@
+import java.util.logging.Logger
+
+import com.atlassian.confluence.spaces.SpaceManager
+import com.atlassian.sal.api.component.ComponentLocator
+import com.atlassian.confluence.security.SpacePermissionManager
+import com.atlassian.confluence.security.SpacePermission
+import com.atlassian.confluence.user.UserAccessor
+import com.atlassian.sal.api.component.ComponentLocator
+import com.atlassian.confluence.user.AuthenticatedUserThreadLocal
+import com.atlassian.user.GroupManager
+
+
+import com.onresolve.scriptrunner.runner.rest.common.CustomEndpointDelegate
+import groovy.json.JsonBuilder
+import groovy.transform.BaseScript
+import org.codehaus.jackson.map.ObjectMapper
+
+import javax.servlet.http.HttpServletRequest
+import javax.ws.rs.core.MultivaluedMap
+import javax.ws.rs.core.Response
+
+import static com.atlassian.user.security.password.Credential.unencrypted
+
+@BaseScript CustomEndpointDelegate delegate
+
+
+
+archiveSpace(
+    httpMethod: "GET", groups: ["confluence-adm"]
+) { MultivaluedMap queryParams, String body, HttpServletRequest request ->
+
+    // validate we have username as a url parameter
+    def Logger logger = Logger.getLogger("")
+    def extraPath = getAdditionalPath(request)
+    if (extraPath=="/")
+    {
+         return Response.serverError().entity([error: "IncorrectSpace"]).build()
+    }
+    assert extraPath =~ "^/[a-zA-Z]+"
+    def spacename = extraPath.split("/").last()
+    
+    def groupManager = ComponentLocator.getComponent(GroupManager)
+    def userAccessor = ComponentLocator.getComponent(UserAccessor)
+    def confAccessor=ComponentLocator.getComponent(AuthenticatedUserThreadLocal)
+    
+    def spacePermissionManager = ComponentLocator.getComponent(SpacePermissionManager)
+    
+//----Check admin right for it
+
+    def group = groupManager.getGroup("Admins")
+    def currentUser = AuthenticatedUserThreadLocal.get().getName()
+
+if (groupManager.getMemberNames(group).contains(currentUser))
+{
+//----If space exist
+
+def Space=CheckSpaceExist(spacename)
+if (Space)
+{
+def spaceManager = ComponentLocator.getComponent(SpaceManager)
+//def targetSpace = spaceManager.getSpace(Space)  
+   spaceManager.archiveSpace(Space)
+   //spaceManager.unarchiveSpace(targetSpace) 
+   logger.info ("Space: "+ Space.key + " archived")
+    
+     def userResponse = [
+        Space: Space.key ,
+        State: "Archived",
+       
+    ]
+     return Response.ok(new JsonBuilder(userResponse).toString()).build()
+}
+    
+}
+    else 
+    {
+        return Response.serverError().entity([error: "Hasn't admin rights"]).build()
+    }
+    
+
+
+   
+return Response.serverError().entity([error: "Something went wrong"]).build()
+   
+}
+
+
+unarchiveSpace(
+    httpMethod: "GET", groups: ["confluence-adm"]
+) { MultivaluedMap queryParams, String body, HttpServletRequest request ->
+
+    // validate we have username as a url parameter
+    def Logger logger = Logger.getLogger("")
+    def extraPath = getAdditionalPath(request)
+    if (extraPath=="/")
+    {
+         return Response.serverError().entity([error: "IncorrectSpace"]).build()
+    }
+    assert extraPath =~ "^/[a-zA-Z]+"
+    def spacename = extraPath.split("/").last()
+    
+    def groupManager = ComponentLocator.getComponent(GroupManager)
+    def userAccessor = ComponentLocator.getComponent(UserAccessor)
+    def confAccessor=ComponentLocator.getComponent(AuthenticatedUserThreadLocal)
+    
+    def spacePermissionManager = ComponentLocator.getComponent(SpacePermissionManager)
+    
+//----Check admin right for it
+
+    def group = groupManager.getGroup("Admins")
+    def currentUser = AuthenticatedUserThreadLocal.get().getName()
+
+if (groupManager.getMemberNames(group).contains(currentUser))
+{
+//----If space exist
+
+def Space=CheckSpaceExist(spacename)
+if (Space)
+{
+def spaceManager = ComponentLocator.getComponent(SpaceManager)
+//def targetSpace = spaceManager.getSpace(Space)  
+   //spaceManager.archiveSpace(Space)
+   spaceManager.unarchiveSpace(Space) 
+   logger.info ("Space: "+ Space.key + " unarchived")
+    
+     def userResponse = [
+        Space: Space.key ,
+        State: "UnArchived",
+       
+    ]
+     return Response.ok(new JsonBuilder(userResponse).toString()).build()
+}
+    
+}
+    else 
+    {
+        return Response.serverError().entity([error: "Hasn't admin rights"]).build()
+    }
+    
+
+
+   
+return Response.serverError().entity([error: "Something went wrong"]).build()
+   
+}
+
+public CheckSpaceExist(String SpName) { 
+    def Logger logger = Logger.getLogger("")
+    def spaceManager = ComponentLocator.getComponent(SpaceManager)
+    def spacePermissionManager = ComponentLocator.getComponent(SpacePermissionManager)
+    def targetSpace = spaceManager.getSpace(SpName)
+// Check - Is this space private
+if (!targetSpace)
+{
+    targetSpace = spaceManager.getSpace("~"+SpName)
+    if (!targetSpace)
+    {
+   //logger.info ("Space not exist")
+        return false
+    }
+   
+} 
+   // logger.info ("Space: "+ targetSpace)
+    return targetSpace
+}
