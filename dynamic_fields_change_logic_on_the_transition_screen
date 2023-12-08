@@ -1,0 +1,54 @@
+
+import groovy.transform.BaseScript
+import com.onresolve.jira.groovy.user.FieldBehaviours
+import com.atlassian.jira.issue.fields.screen.FieldScreen
+
+@BaseScript FieldBehaviours fieldBehaviours
+
+final String screenName = 'Sub-task Types'
+def subTaskField = getFieldByName("Sub-task Type")
+def issSumary = getFieldByName("Issue summary")
+def issDescr = getFieldByName("Issue description")
+def filesField = getFieldByName("Files for a Sub-Task")
+def rackLocation = getFieldByName("Rack location")
+def subTaskFieldVal = subTaskField.value
+List sbtsks = ["Regular", "Logistic coordination", "Planning coordination", "Rack location", "Racking & patching", "Network config", "Access and connectivity", "OS & app install", "Infra validation", "Network validation", "Itracs update"]
+
+if(fieldScreen.name == screenName){
+
+if(sbtsks.contains(subTaskFieldVal)){
+    filesField.setHidden(true)
+    filesField.setFormValue(null)
+}
+if(!sbtsks.contains(subTaskFieldVal)){
+    filesField.setHidden(false)
+
+}
+if(subTaskFieldVal == "Rack location") {
+    rackLocation.setRequired(true)
+    rackLocation.setHidden(false)
+} 
+if(subTaskFieldVal != "Rack location"){
+    rackLocation.setRequired(false)
+    rackLocation.setFormValue(null)
+    rackLocation.setHidden(true)
+}
+if(subTaskFieldVal == "Regular") {
+    issSumary.setRequired(true)
+    issSumary.setHidden(false)
+//    issDescr.setFormValue(null)
+    issDescr.setHidden(false) 
+} 
+if(subTaskFieldVal != "Regular"){
+    issSumary.setRequired(false)
+    issSumary.setFormValue(null)
+    issSumary.setHidden(true)
+    issDescr.setFormValue(null)
+    issDescr.setHidden(true)    
+}    
+}
+
+
+
+
+
