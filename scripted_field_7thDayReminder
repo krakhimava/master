@@ -1,0 +1,27 @@
+// customfield_14534 - Start date.
+// customfield_14535 - End date.
+
+number week_number;
+number end_date_mil;
+///number start_date_mil;
+number week_date;
+number week_date_num;
+date trigger_date;
+number svnd = 604800000;
+
+date end_date = customfield_14535;
+//date start_date = customfield_14534;
+
+if(isNotNull(end_date)){
+end_date_mil = end_date["TOMILLIS"];
+//start_date_mil = start_date["TOMILLIS"];
+week_number = end_date_mil - svnd;
+//week_date_num = start_date_mil + week_number;
+
+trigger_date = millisToDate(week_number);
+return trigger_date; //toJiraDateFormat(trigger_date, false);
+
+}
+else{ 
+    return 0;
+}
