@@ -1,0 +1,26 @@
+// customfield_14534 - Start date.
+// customfield_14535 - End date.
+
+number middle_number;
+number end_date_mil;
+number start_date_mil;
+number middle_date;
+number middle_date_num;
+date trigger_date;
+
+date end_date = customfield_14535;
+date start_date = customfield_14534;
+
+if(isNotNull(end_date) && isNotNull(start_date)){
+end_date_mil = end_date["TOMILLIS"];
+start_date_mil = start_date["TOMILLIS"];
+middle_number = (end_date_mil - start_date_mil)/2;
+middle_date_num = start_date_mil + middle_number;
+
+trigger_date = millisToDate(middle_date_num);
+return trigger_date; //toJiraDateFormat(trigger_date, false);
+
+}
+else{ 
+    return 0;
+}
