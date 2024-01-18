@@ -1,0 +1,13 @@
+if(key.project == "MA" && key.type == "Epic") {
+    number calculatedSPLOKI = 0;
+    string [] prjArray = {"MA"};
+    string [] statusArray = {"Rejected","Closed"};
+      string [] issuesInEpicLOKI = allLinkedIssues(key,"Epic-Story Link", 1);
+      if(issuesInEpicLOKI != ""){
+      for(string lkeyLOKI in issuesInEpicLOKI) {
+         if(elementExists(prjArray, lkeyLOKI.project) && isNotNull(lkeyLOKI.customfield_10182) && !elementExists(statusArray, lkeyLOKI.status)){
+            calculatedSPLOKI += lkeyLOKI.customfield_10182;//customfield_10182 - "Story point"
+        }
+    }}
+    return calculatedSPLOKI;
+}
