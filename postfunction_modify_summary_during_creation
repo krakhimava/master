@@ -1,0 +1,9 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.user.ApplicationUser
+
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+def cField = customFieldManager.getCustomFieldObjectsByName("My User Picker Field")
+def cFieldValue = issue.getCustomFieldValue(cField[0]) as ApplicationUser
+
+if (cFieldValue) {
+   issue.summary = issue.summary + ": " + cFieldValue.displayName }
