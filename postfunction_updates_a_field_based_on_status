@@ -1,0 +1,18 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.util.DefaultIssueChangeHolder
+import com.atlassian.jira.issue.ModifiedValue
+
+   
+//gets the value of the field
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+def cField = customFieldManager.getCustomFieldObjectsByName("My message Field")
+def cFieldValue = issue.getCustomFieldValue(cField[0])
+
+//custom message to be displayed
+def message = "*Issue status*: " + 
+    			issue.getStatus().name + "\n" +
+    		"*This is a message that will be displayed*"
+
+//updates the value in the field
+def changeHolder = new DefaultIssueChangeHolder()
+cField[0].updateValue(null, issue, new ModifiedValue(cFieldValue, message),changeHolder)
