@@ -1,0 +1,21 @@
+def resp = post("/rest/api/3/issue")
+        .header("Content-Type", "application/json")
+        .body(
+        fields: [
+                    summary: "New issue from EARTH on cloud :)",
+                    issuetype: [
+                            id: 10331
+                    ],
+                    project: [
+                        id: 10524
+                        ]
+        ])
+        .asObject(Map)
+
+
+// If the task created successfully return a success message along with its key
+if (resp.status == 201) {
+    return 'Success - Created with the key of ' + resp.body.key.toString()
+} else {
+    return "${resp.status}: ${resp.body}"
+}
