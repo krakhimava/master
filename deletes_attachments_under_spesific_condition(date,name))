@@ -1,0 +1,26 @@
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.issue.AttachmentManager;
+import java.util.Calendar;
+
+AttachmentManager attachmentManager = ComponentAccessor.attachmentManager;
+
+def isAttachmentEligibleForDeletion(attachment) {
+    def fileName = attachment.getFilename();
+    def isLogFile = fileName.endsWith('.log');
+    
+    def attachmentCreationDate = attachment.getCreated();
+    Calendar calendar = Calendar.getInstance();
+    calendar.set(2023, Calendar.JANUARY, 1);
+    def specificDate = calendar.getTime();
+    def isOldAttachment = attachmentCreationDate.before(specificDate);
+    
+    return isLogFile && isOldAttachment;
+}
+
+def attachments = attachmentManager.getAttachments(issue);
+
+attachments.each { attachment ->
+    if (isAttachmentEligibleForDeletion(attachment)) {
+        attachmentManager.deleteAttachment(attachment);
+    }
+}
