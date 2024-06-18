@@ -1,0 +1,16 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+
+def customFieldIssue = ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Issue Picker")
+def sIssue = (Issue) issue.getCustomFieldValue(customFieldIssue)
+
+if (sIssue) {
+    issue.setPriority(sIssue.getPriority())
+    issue.setDueDate(sIssue.getDueDate())
+}
+
+def priorityField = ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Priority Field")
+def dueDateField = ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Due Date Field")
+
+issue.setCustomFieldValue(priorityField, sIssue.getPriority().getName())
+issue.setCustomFieldValue(dueDateField, sIssue.getDueDate())
