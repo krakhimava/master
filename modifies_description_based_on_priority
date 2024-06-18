@@ -1,0 +1,32 @@
+import com.onresolve.jira.groovy.user.FieldBehaviours;
+import com.atlassian.jira.issue.priority.Priority;
+import groovy.transform.BaseScript;
+
+@BaseScript FieldBehaviours fieldBehaviours
+
+def priorityField = getFieldById(getFieldChanged())
+def descriptionField = getFieldById("description")
+
+// Define a map of priority levels and their corresponding descriptions
+def priorityDescriptions = [
+    "Highest": "Please explain why this is Highest priority including details of outage etc.",
+    "High": "Provide reasons for the urgency of this issue.",
+    "Medium": "Describe the importance of this issue to the project.",
+    "Low": "Add any additional context or details about this issue."
+]
+
+// Check if the selected priority exists in the map
+def selectedPriority = (priorityField.value as Priority)?.name
+if (priorityDescriptions.containsKey(selectedPriority)) {
+    descriptionField.setDescription(priorityDescriptions[selectedPriority])
+} else {
+    descriptionField.setDescription("Please specify why this issue is important.")
+}
+
+// Example of input validation for the description field (minimum length of 10 characters)
+def descriptionValue = descriptionField.value?.toString()
+if (descriptionValue && descriptionValue.length() < 10) {
+    descriptionField.setError("Description must be at least 10 characters long.")
+} else {
+    descriptionField.clearError()
+}
