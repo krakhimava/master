@@ -1,0 +1,46 @@
+import java.text.SimpleDateFormat
+import java.util.Calendar
+
+// Issue key to update
+def issueKey = 'ABC-123'
+
+// Get today's date and add 7 days
+def calendar = Calendar.getInstance()
+calendar.add(Calendar.DATE, 7)
+def targetDate = calendar.getTime()
+
+// Name of the date picker field to set
+def datePickerFieldName = 'Target Completion Date'
+
+// Field to get the value
+def customField = get("/rest/api/2/field")
+        .asObject(List)
+        .body
+        .find {
+            (it as Map).name == datePickerFieldName
+        } as Map
+
+// Check if the custom field returns a valid field and is not null
+assert customField != null : "Cannot find custom field with name of: ${datePickerFieldName}"
+
+// Format the target date to 'yyyy-MM-dd'
+def dateFormatter = new SimpleDateFormat('yyyy-MM-dd')
+def formattedDate = dateFormatter.format(targetDate)
+
+// Update the issue
+def result = put("/rest/api/2/issue/${issueKey}")
+        .header('Content-Type', 'application/json')
+        .body([
+            fields:[
+                // Set the custom date picker field date to the calculated target date
+                (customField.id): formattedDate
+            ]
+        ])
+        .asString()
+
+// Validate the issue updated correctly
+if (result.status == 204) {
+    return "Success - The issue with the key of ${issueKey} has been updated with a new date in the ${datePickerFieldName} field."
+} else {
+    return "${result.status}: ${result.body}"
+}
