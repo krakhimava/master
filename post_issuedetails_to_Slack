@@ -1,0 +1,54 @@
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+
+// Specify the issue key
+def issueKey = 'TEST-123'
+
+// Fetch the issue details from Jira
+def issueResp = get("/rest/api/2/issue/${issueKey}")
+        .header("Content-Type", "application/json")
+        .asObject(Map)
+
+assert issueResp.status == 200 : "Failed to fetch issue details from Jira"
+
+def issue = issueResp.body
+
+// Extract issue details
+def summary = issue.fields.summary
+def description = issue.fields.description ?: "No description provided."
+def reporter = issue.fields.reporter.displayName
+def priority = issue.fields.priority.name
+
+// Specify the name of the Slack channel you want to post to
+def channelName = 'incident-reports'
+
+// Specify the name of the user who will make the post
+def username = 'JiraBot'
+
+// Specify the message metadata
+Map msgMeta = [ 
+    channel: channelName, 
+    username: username,
+    icon_emoji: ':jira:'
+]
+
+// Construct the message body
+Map msgDets = [
+    text: """A new issue has been created:
+    *Issue Key:* ${issueKey}
+    *Summary:* ${summary}
+    *Description:* ${description}
+    *Reporter:* ${reporter}
+    *Priority:* ${priority}"""
+]
+
+// Post to Slack
+def postToSlack = post('https://slack.com/api/chat.postMessage')
+        .header('Content-Type', 'application/json')
+        .header('Authorization', "Bearer ${TOKEN}")
+        .body(JsonOutput.toJson(msgMeta + msgDets))
+        .asObject(Map)
+
+assert postToSlack.body.ok : "Failed to post message to Slack: ${postToSlack.body.error}"
+
+return "Slack message created successfully"
