@@ -1,0 +1,28 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+// Define the custom fields by their IDs
+def mainTeamFieldId = "customfield_10001" // ID for the "Main Team" field
+def volunteerFieldId = "customfield_10002" // ID for the "Volunteer" field
+def startDateFieldName = "Start Date" // Name of the additional field to hide
+
+// Get the fields using their IDs and name
+def mainTeamField = getFieldById(mainTeamFieldId)
+def volunteerField = getFieldById(volunteerFieldId)
+def startDateField = getFieldByName(startDateFieldName)
+
+// Get the value of the "Main Team" field
+def mainTeamValue = mainTeamField.getValue()
+
+// Log the values for debugging
+log.debug("Main Team Field Value: " + mainTeamValue)
+
+// Hide "Volunteer" field and make it not required if "Main Team" has a value
+if (mainTeamValue) {
+    volunteerField.setHidden(true)
+    volunteerField.setRequired(false)
+    startDateField.setHidden(true) // Hide the "Start Date" field when "Main Team" is selected
+} else {
+    volunteerField.setHidden(false)
+    volunteerField.setRequired(true)
+    startDateField.setHidden(false) // Show the "Start Date" field when "Main Team" is not selected
+}
