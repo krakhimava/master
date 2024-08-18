@@ -1,0 +1,17 @@
+// Error message for missing field input during transition
+string errorMsg = "Deployment Version field must be specified before transitioning";
+
+string[] validProjects = {"PROJECTA", "PROJECTB", "PROJECTC"};
+string deploymentVersion = customfield_45678;
+
+// Check if the current project is in the list and if the field is empty
+if(arrayFind(validProjects, project) != -1) {
+    if(isNull(deploymentVersion) || deploymentVersion == "") {
+        return false, errorMsg;
+    }
+}
+
+// Ensure the field is not empty and also of a valid format 
+if(!matches(deploymentVersion, "^\\d+\\.\\d+\\.\\d+$")) {
+    return false, "Deployment Version must be in the format X.X.X";
+}
