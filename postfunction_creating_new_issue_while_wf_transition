@@ -1,0 +1,22 @@
+string issue_priority = "Critical (P2)";
+string issue_description = getInput("customfield_30001");
+string issue_summary = getInput("customfield_30002");
+string assignee = "john.doe";
+
+string BugTask = createIssue(
+    "PRJCT",
+    "",
+    "Bug",
+    issue_summary,
+    issue_priority,
+    issue_description,
+    "",
+    assignee,
+    "",
+    "",
+    {}
+);
+
+%BugTask%.customfield_10600 = "Review Needed";
+// Link the newly created issue as a "Related" issue
+linkIssue(BugTask.key, key, "Relates");
