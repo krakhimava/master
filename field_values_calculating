@@ -1,0 +1,22 @@
+if (project == "SAOPS" && issueType == "Feature Enhancement") {
+    number PriorityLevel = 0;
+    number FeasibilityScore = 0;
+    number ValueRating = 0;
+
+    JFieldChange[] recentChanges = lastIssueChanges(key);
+    for (JFieldChange change in recentChanges) {
+        if ((change.field == "PriorityLevel" || change.field == "FeasibilityScore" || change.field == "ValueRating") && (change.oldVal != change.newVal)) {
+            PriorityLevel = key.customfield_40040;
+            FeasibilityScore = key.customfield_50050;
+            ValueRating = key.customfield_60060;
+
+            if (isNotNull(PriorityLevel) && isNotNull(FeasibilityScore) && isNotNull(ValueRating)) {
+                %key%.customfield_70070 = (PriorityLevel * 2 + FeasibilityScore + ValueRating) / 4;  // Weighted average calculation
+            } else {
+                %key%.customfield_70070 = "N/A";
+            }
+        }
+    }
+}
+
+
