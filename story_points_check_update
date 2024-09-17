@@ -1,0 +1,38 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.search.SearchProvider
+import com.atlassian.jira.jql.parser.JqlQueryParser
+import com.atlassian.jira.bc.issue.search.SearchService
+import com.atlassian.jira.web.bean.PagerFilter
+import com.atlassian.jira.issue.MutableIssue
+import com.atlassian.jira.issue.fields.CustomField
+import com.atlassian.jira.event.type.EventDispatchOption
+
+def issueManager = ComponentAccessor.getIssueManager()
+def searchService = ComponentAccessor.getComponent(SearchService)
+def jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser)
+def user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+
+def sprintId = 12345 // the required sprint id
+def jqlQuery = "sprint = ${sprintId}"
+
+def query = jqlQueryParser.parseQuery(jqlQuery)
+def searchResults = searchService.search(user, query, PagerFilter.getUnlimitedFilter())
+
+CustomField storyPointsField = customFieldManager.getCustomFieldObjectByName("Story Points")
+
+searchResults.results.each { issue ->
+    MutableIssue mutableIssue = issueManager.getIssueObject(issue.id)
+
+    def storyPoints = mutableIssue.getCustomFieldValue(storyPointsField)
+    if (storyPoints == null) {
+        // If Story Points is empty, it will be '1'
+        mutableIssue.setCustomFieldValue(storyPointsField, 1)
+        issueManager.updateIssue(user, mutableIssue, EventDispatchOption.ISSUE_UPDATED, false)
+        log.info("Story Points for issue ${mutableIssue.key} set to 1.")
+    } else {
+        log.info("Issue ${mutableIssue.key} already has Story Points set: ${storyPoints}")
+    }
+}
+
+log.info("Sprint update complete.")
