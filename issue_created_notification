@@ -1,0 +1,32 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+import com.atlassian.mail.Email
+import com.atlassian.mail.server.SMTPMailServer
+
+Issue issue = event.issue
+
+if (issue.issueType.name == "Bug" && issue.projectObject.key == "EARTH") {
+    def recipientEmail = "bob.dylan@example.com"
+    def emailSubject = "New Bug is Created in the Earth Project"
+    def emailBody = """
+        Hello Bob Dylan,
+
+        A new bug has been created in the Earth Project.
+        You can view the bug here: ${ComponentAccessor.getApplicationProperties().getString("jira.baseurl")}/browse/${issue.key}
+
+        Regards,
+        Jira Bot
+    """
+    
+    sendEmail(recipientEmail, emailSubject, emailBody)
+}
+
+def sendEmail(String to, String subject, String body) {
+    SMTPMailServer mailServer = ComponentAccessor.mailServerManager.defaultSMTPMailServer
+    if (mailServer) {
+        Email email = new Email(to)
+        email.setSubject(subject)
+        email.setBody(body)
+        mailServer.send(email)
+    }
+}
