@@ -1,0 +1,34 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.event.issue.IssueEvent
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.bc.issue.IssueService
+import com.atlassian.jira.user.ApplicationUser
+
+def event = event as IssueEvent
+Issue issue = event.issue
+
+def issueStatus = issue.getStatus().getName()
+if (issueStatus != "Review") {
+    return
+}
+
+if (issue.getProjectObject().getKey() != "EARTH") {
+    return
+}
+
+ApplicationUser user = ComponentAccessor.getUserManager().getUserByName("anna.bonn")
+
+def issueService = ComponentAccessor.getIssueService()
+
+def issueInputParameters = issueService.newIssueInputParameters()
+issueInputParameters.setAssigneeId(user.key)
+
+def currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+def validationResult = issueService.validateAssign(currentUser, issue.id, user.key)
+
+if (validationResult.isValid()) {
+    issueService.assign(currentUser, validationResult)
+    log.info("Issue ${issue.key} has been successfully assigned to ${user.username}")
+} else {
+    log.error("Failed to assign issue ${issue.key} to ${user.username}: " + validationResult.getErrorCollection())
+}
