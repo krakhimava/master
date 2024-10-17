@@ -1,0 +1,23 @@
+import com.atlassian.jira.component.ComponentAccessor
+import java.util.Calendar
+import java.sql.Timestamp
+
+def issue = issue
+def dueDate = issue.getDueDate()
+
+def currentDate = new Date()
+def currentDueDate = dueDate ?: currentDate
+
+// Add 7 days to the current due date
+def calendar = Calendar.getInstance()
+calendar.setTime(currentDueDate)
+calendar.add(Calendar.DAY_OF_YEAR, 7)
+def newDueDate = new Timestamp(calendar.getTimeInMillis())
+
+issue.setDueDate(newDueDate)
+
+def issueManager = ComponentAccessor.getIssueManager()
+issueManager.updateIssue(ComponentAccessor.jiraAuthenticationContext.getLoggedInUser(), issue, com.atlassian.jira.event.type.EventDispatchOption.DO_NOT_DISPATCH, false)
+
+// Log the update
+log.info("Due Date for issue ${issue.key} has been updated to ${newDueDate}")
