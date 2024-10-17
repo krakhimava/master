@@ -1,0 +1,30 @@
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.issue.MutableIssue;
+import com.atlassian.jira.event.type.EventDispatchOption;
+
+if (issue.isSubTask()) {
+    
+    def parent = issue.getParentObject();
+    def originalEstimate = issue.getOriginalEstimate() ?: 0L;
+    def parentEstimate = parent.getEstimate() ?: 0L;
+    def parentOriginalEstimate = parent.getOriginalEstimate() ?: 0L;
+    
+    Long newEstimate = parentEstimate - originalEstimate;
+    Long newOriginalEstimate = parentOriginalEstimate - originalEstimate;
+
+    // Ensure estimates are non-negative
+    if (newEstimate < 0) newEstimate = 0L;
+    if (newOriginalEstimate < 0) newOriginalEstimate = 0L;
+
+    // Update parent issue's estimates
+    MutableIssue parentObject = ComponentAccessor.getIssueManager().getIssueObject(parent.getId());
+    parentObject.setEstimate(newEstimate);
+    parentObject.setOriginalEstimate(newOriginalEstimate);
+
+    ComponentAccessor.getIssueManager().updateIssue(
+        issue.getReporter(),
+        parentObject,
+        EventDispatchOption.DO_NOT_DISPATCH,
+        false
+    ); 
+}
