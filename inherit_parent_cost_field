@@ -1,0 +1,23 @@
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.component.ComponentAccessor
+
+if (issue.isSubTask()) {
+    
+    Issue parent = issue.getParentObject()
+    
+    issue.setFixVersions(parent.getFixVersions())
+    
+    def customFieldManager = ComponentAccessor.getCustomFieldManager()
+    
+    def CostCustomField = customFieldManager.getCustomFieldObjects(parent).find { it.name == 'Cost' }
+    
+    def CostValue = issue.getCustomFieldValue(CostCustomField)
+    log.warn("Cost field value on sub-task: ${CostValue?.value ?: 'Not Set'}")
+    
+    // If 'Cost' is not set on the sub-task, inherit the value from the parent
+    if (!CostValue) {
+        def parentCostValue = parent.getCustomFieldValue(CostCustomField)
+        issue.setCustomFieldValue(CostCustomField, parentCostValue)
+        log.info("Cost field inherited from parent: ${parentCostValue?.value ?: 'Not Set'}")
+    }
+}
