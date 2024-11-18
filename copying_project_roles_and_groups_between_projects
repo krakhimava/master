@@ -1,0 +1,69 @@
+
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.security.roles.ProjectRoleManager
+import com.atlassian.jira.security.roles.ProjectRoleActors
+
+def sourceProjectKey = "MOONCOSTS" 
+def targetProjectKey = "MOONDELIVERY" 
+
+def projectManager = ComponentAccessor.getProjectManager()
+def projectRoleManager = ComponentAccessor.getComponent(ProjectRoleManager)
+
+// Fetch source and target projects
+def sourceProject = projectManager.getProjectByCurrentKeyIgnoreCase(sourceProjectKey)
+def targetProject = projectManager.getProjectByCurrentKeyIgnoreCase(targetProjectKey)
+
+// Validate projects
+if (!sourceProject) {
+    log.error "Source project with key '${sourceProjectKey}' not found!"
+    return
+}
+if (!targetProject) {
+    log.error "Target project with key '${targetProjectKey}' not found!"
+    return
+}
+
+log.info "Copying roles from '${sourceProject.name}' to '${targetProject.name}'"
+
+// Iterate through all project roles in the source project
+projectRoleManager.getProjectRoles().each { projectRole ->
+    def roleName = projectRole.name
+    def sourceActors = projectRoleManager.getProjectRoleActors(projectRole, sourceProject)
+
+    log.info "Copying role '${roleName}'..."
+
+    // Get current actors (users and groups) in the role
+    def currentUsers = sourceActors.getUsers().collect { it.key }
+    def currentGroups = sourceActors.getGroups().collect { it.name }
+
+    // Apply these actors to the same role in the target project
+    def targetActors = projectRoleManager.getProjectRoleActors(projectRole, targetProject)
+
+    // Add users
+    currentUsers.each { userKey ->
+        if (!targetActors.getUsers().find { it.key == userKey }) {
+            projectRoleManager.addActorToProjectRole(
+                userKey,
+                projectRole,
+                targetProject,
+                ProjectRoleActors.USER_ROLE_ACTOR_TYPE
+            )
+            log.info "Added user '${userKey}' to role '${roleName}' in project '${targetProjectKey}'"
+        }
+    }
+
+    // Add groups
+    currentGroups.each { groupName ->
+        if (!targetActors.getGroups().find { it.name == groupName }) {
+            projectRoleManager.addActorToProjectRole(
+                groupName,
+                projectRole,
+                targetProject,
+                ProjectRoleActors.GROUP_ROLE_ACTOR_TYPE
+            )
+            log.info "Added group '${groupName}' to role '${roleName}' in project '${targetProjectKey}'"
+        }
+    }
+}
+
+log.info "Copying roles from '${sourceProject.name}' to '${targetProject.name}' os finished!"
