@@ -1,0 +1,28 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.util.DefaultIssueChangeHolder
+import com.atlassian.jira.issue.ModifiedValue
+
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+
+def customField = customFieldManager.getCustomFieldObjectsByName("Priority Warning")[0]
+
+def issuePriority = issue.getPriority()?.name ?: "None"
+
+// The message
+def warningMessage = ""
+if (issuePriority == "High" || issuePriority == "Critical") {
+    warningMessage = "*Priority Alert:*\n" +
+                     "The issue is marked as '${issuePriority}'.\n" +
+                     "Immediate action is required!"
+} else {
+    warningMessage = "*Priority Information:*\n" +
+                     "The issue priority is '${issuePriority}'.\n" +
+                     "No immediate action is needed."
+}
+
+// The current value of the custom field
+def customFieldValue = issue.getCustomFieldValue(customField)
+
+// Update the custom field with the new message
+def changeHolder = new DefaultIssueChangeHolder()
+customField.updateValue(null, issue, new ModifiedValue(customFieldValue, warningMessage), changeHolder)
