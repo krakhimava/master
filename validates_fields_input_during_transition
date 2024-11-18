@@ -1,0 +1,31 @@
+import com.onresolve.jira.groovy.user.FieldBehaviours
+import groovy.transform.BaseScript
+
+@BaseScript FieldBehaviours behaviours
+
+// Field to validate
+def fixRequiredField = getFieldById("customfield_12333")
+
+// Error message
+def errorMessage = "Fix Build field is mandatory for this transition."
+
+// Fetch project key and transition name
+def projectKey = issueContext.projectObject.key
+def transitionName = actionName ?: ""
+
+// Log transition details for debugging
+log.info "Validating Fix Build field for Project: ${projectKey}, Transition: ${transitionName}"
+
+// List of projects where validation applies
+def targetProjects = ["A", "B", "C", "D", "V"]
+
+// Validate field input for specific projects and transitions
+if (targetProjects.contains(projectKey)) {
+    if (transitionName == "Ready for Test" || transitionName == "Ready for Release") {
+        if (!fixRequiredField.getValue()) {
+            fixRequiredField.setError(errorMessage)
+        } else {
+            fixRequiredField.clearError()
+        }
+    }
+}
