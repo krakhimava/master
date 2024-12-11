@@ -1,0 +1,30 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+String errorMsgMissingField = "Version field must be specified before transitioning"
+String errorMsgInvalidFormat = "The Version must be in the format X.X.X"
+
+def validProjects = ["MMA", "MARS"]
+String customFieldId = "customfield_23678"
+
+def issue = issue
+def projectKey = issue.projectObject.key
+
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+def deploymentVersionField = customFieldManager.getCustomFieldObject(customFieldId)
+if (!deploymentVersionField) {
+    throw new IllegalArgumentException("Custom field '${customFieldId}' not found!")
+}
+
+def deploymentVersion = issue.getCustomFieldValue(deploymentVersionField) as String
+
+if (validProjects.contains(projectKey)) {
+    if (!deploymentVersion || deploymentVersion.trim().isEmpty()) {
+        return false, errorMsgMissingField
+    }
+    
+    if (!deploymentVersion.matches("\\d+\\.\\d+\\.\\d+")) {
+        return false, errorMsgInvalidFormat
+    }
+}
+
+return true
