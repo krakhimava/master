@@ -1,0 +1,28 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.event.link.LinkIssueEvent
+import com.atlassian.jira.issue.link.IssueLinkTypeManager
+import com.atlassian.jira.security.JiraSecurityContext
+import com.atlassian.jira.issue.link.IssueLinkManager
+import com.atlassian.jira.issue.Issue
+
+// Define the allowed link type name
+def allowedLinkTypeName = "Defect"
+
+// Get the event and the linked issue information
+def event = event as LinkIssueEvent
+def sourceIssue = event.getSourceIssue() // The source issue being linked
+def destinationIssue = event.getDestinationIssue() // The target issue being linked
+
+// Get the link type id and link type manager
+def linkTypeId = event.getLinkTypeId()
+def linkTypeManager = ComponentAccessor.getComponent(IssueLinkTypeManager)
+
+// Retrieve the link type by its ID
+def linkType = linkTypeManager.getIssueLinkType(linkTypeId)
+
+// Check if the link type matches the allowed one
+if (linkType?.name != allowedLinkTypeName) {
+    // Return an error message if it's not the allowed link type
+    def errorMessage = "Only 'Defect' link type is allowed for linking issues."
+    throw new IllegalArgumentException(errorMessage)
+}
