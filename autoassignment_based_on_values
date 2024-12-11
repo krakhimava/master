@@ -1,0 +1,43 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+// Get necessary Jira components
+def userManager = ComponentAccessor.getUserManager()
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+def changeHistoryManager = ComponentAccessor.getChangeHistoryManager()
+
+// Check if the issue is in the "MARS" project and the issue type is "Release"
+if (issue.projectObject.key == "MARS" && issue.issueType.name == "Release") {
+    
+    // Get the custom field value for "Room"
+    def roomField = customFieldManager.getCustomFieldObject("customfield_28742")
+    def roomValue = issue.getCustomFieldValue(roomField)
+
+    // Check if the field "Room" has changed
+    def changeHistory = changeHistoryManager.getChangeItems(issue)
+    def roomFieldChanged = changeHistory.any { it.field == roomField.getName() }
+
+    if (roomFieldChanged) {
+        
+        // Assign based on the "Room" value
+        def assigneeName
+        switch (roomValue) {
+            case "Cage 1":
+            case "Cage 2":
+            case "Colonisation":
+                assigneeName = "mcgregor.nick"
+                break
+            case "Stability Rack 1":
+            case "Stability Rack 2":
+                assigneeName = "tom.nikelson"
+                break
+        }
+
+        // If a valid assignee is determined, set the assignee
+        if (assigneeName) {
+            def assignee = userManager.getUserByName(assigneeName)
+            if (assignee) {
+                issue.setAssignee(assignee)
+            }
+        }
+    }
+}
