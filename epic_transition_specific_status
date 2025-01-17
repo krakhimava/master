@@ -1,0 +1,29 @@
+import com.atlassian.jira.component.ComponentAccessor;
+
+def issueService = ComponentAccessor.getIssueService();
+def currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
+def customFieldManager = ComponentAccessor.getCustomFieldManager();
+
+def epicLinkFieldId = 10000; // Epic Link 
+def transitionId = 51; // ID of the To Do transition
+
+def epicLinkField = customFieldManager.getCustomFieldObject(epicLinkFieldId);
+def issueEpic = issue?.getCustomFieldValue(epicLinkField) as Issue;
+
+if (issueEpic && issueEpic.status.name == "To Do") { 
+    def transitionValidationResult = issueService.validateTransition(
+        currentUser,
+        issueEpic.id,
+        transitionId,
+        issueService.newIssueInputParameters().setRemainingEstimate(0L)
+    );
+
+    if (transitionValidationResult.isValid()) {
+        issueService.transition(currentUser, transitionValidationResult);
+        log.info("Transition completed successfully for Epic: ${issueEpic.key}");
+    } else {
+        log.error("Transition failed for Epic: ${issueEpic.key}. Errors: ${transitionValidationResult.errorCollection.errors}");
+    }
+} else {
+    log.info("Epic is not in the required status or does not exist.");
+}
