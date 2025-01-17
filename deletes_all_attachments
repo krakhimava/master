@@ -1,0 +1,25 @@
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.issue.Issue;
+import com.atlassian.jira.issue.attachment.AttachmentManager;
+
+// Get the AttachmentManager instance
+AttachmentManager attachmentManager = ComponentAccessor.getAttachmentManager();
+
+// Retrieve the IssueManager to get the issue by key
+def issueManager = ComponentAccessor.getIssueManager();
+
+def issueKey = "<INSERT_the_ISSUE_KEY>"; 
+def issue = issueManager.getIssueByCurrentKey(issueKey);
+
+if (issue) {
+    // Retrieve all attachments for the specified issue
+    def attachments = attachmentManager.getAttachments(issue);
+
+    // Iterate through each attachment and delete it
+    attachments.each { attachment ->
+        attachmentManager.deleteAttachment(attachment);
+    }
+    println "All attachments for issue ${issueKey} have been deleted.";
+} else {
+    println "Issue with key ${issueKey} not found.";
+}
