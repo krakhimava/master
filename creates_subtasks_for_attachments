@@ -1,0 +1,33 @@
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.issue.Issue;
+import com.atlassian.jira.issue.IssueManager;
+import com.atlassian.jira.issue.MutableIssue;
+import com.atlassian.jira.config.SubTaskManager;
+import com.atlassian.jira.issue.attachment.Attachment;
+
+// Ensure the issue is not a sub-task and has attachments
+def attachmentManager = ComponentAccessor.getAttachmentManager();
+def attachments = attachmentManager.getAttachments(issue);
+if (issue.getIssueType().getName() != "Sub-task" && attachments) {
+    def currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
+    def issueManager = ComponentAccessor.getIssueManager();
+    def subTaskManager = ComponentAccessor.getSubTaskManager();
+    def subTaskTypeId = ComponentAccessor.getConstantsManager()
+        .getAllIssueTypeObjects()
+        .find { it.getName() == "Sub-task" }
+        .id;
+
+    attachments.eachWithIndex { Attachment attachment, int index ->
+        def newSubTask = issueManager.createIssueObject(currentUser, [
+            summary: "Sub-Task Attachment: ${index + 1}",
+            description: "Sub-Task generated for attachment: ${attachment.filename}",
+            parentObject: issue,
+            reporterId: currentUser.username,
+            projectObject: issue.getProjectObject(),
+            issueTypeId: subTaskTypeId
+        ]);
+
+        subTaskManager.createSubTaskIssueLink(issue, newSubTask, currentUser);
+        attachmentManager.copyAttachment(attachment, currentUser, newSubTask.getKey());
+    }
+}
