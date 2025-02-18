@@ -1,0 +1,23 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+def cfVN = getFieldByName("User Input")
+
+// Retrieve and clean input
+def fieldValue = cfVN?.getFormValue()?.toString()?.trim()
+
+// Define validation rules
+def minLength = 3
+def maxLength = 50
+def validPattern = /^[a-zA-Z0-9 ]*$/ // Allows letters, numbers, and spaces
+
+if (!fieldValue) {
+    cfVN.setError("This field is required. Please enter a value.")
+} else if (fieldValue.length() < minLength) {
+    cfVN.setError("Too short! Minimum $minLength characters required.")
+} else if (fieldValue.length() > maxLength) {
+    cfVN.setError("Too long! Maximum $maxLength characters allowed.")
+} else if (!fieldValue.matches(validPattern)) {
+    cfVN.setError("Invalid input! Only letters and numbers are allowed.")
+} else {
+    cfVN.clearError()
+}
