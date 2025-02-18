@@ -1,0 +1,28 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.onresolve.scriptrunner.runner.util.UserMessageUtil
+import org.apache.commons.lang3.StringUtils
+
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+def emailField = customFieldManager.getCustomFieldObjectByName("E-mail Destinatari")
+
+// Retrieve email addresses from the custom field
+String emailAddresses = issue?.getCustomFieldValue(emailField) as String
+
+// Email validation regex
+def validEmailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+
+if (StringUtils.isNotBlank(emailAddresses)) {
+    def emails = emailAddresses.split(",")*.trim() // Trim spaces and split by comma
+    
+    for (String email : emails) {
+        if (!email.matches(validEmailPattern)) {
+            log.warn("Invalid email detected: ${email}")
+            return false
+        }
+    }
+    log.info("All emails are valid: ${emails}")
+    return true
+} else {
+    log.warn("No email addresses provided.")
+    return false
+}
