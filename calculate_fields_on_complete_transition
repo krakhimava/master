@@ -1,0 +1,57 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.issue.fields.CustomField
+import com.atlassian.jira.issue.IssueManager
+import com.atlassian.jira.issue.IssueService
+import com.atlassian.jira.user.ApplicationUser
+import com.atlassian.jira.util.ErrorCollection
+
+final String TARGET_PROJECT_KEY = "SPACE"
+final String FIELD_A_ID = "customfield_10101"
+final String FIELD_B_ID = "customfield_10102"
+final String RESULT_FIELD_ID = "customfield_10103"
+
+Issue issue = issue
+if (issue.projectObject.key != TARGET_PROJECT_KEY) {
+    return
+}
+
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+CustomField fieldA = customFieldManager.getCustomFieldObject(FIELD_A_ID)
+CustomField fieldB = customFieldManager.getCustomFieldObject(FIELD_B_ID)
+CustomField resultField = customFieldManager.getCustomFieldObject(RESULT_FIELD_ID)
+
+if (!fieldA || !fieldB || !resultField) {
+    throw new IllegalArgumentException("One or more custom fields not found!")
+}
+
+// Get custom field values and ensure they are numeric
+def valueA = issue.getCustomFieldValue(fieldA) instanceof Number ? (issue.getCustomFieldValue(fieldA) as Double) : 0.0
+
+def valueB = issue.getCustomFieldValue(fieldB) instanceof Number ? (issue.getCustomFieldValue(fieldB) as Double) : 0.0
+
+def resultValue = valueA + valueB
+
+// check for 'not null'
+if (resultValue == null) {
+    throw new IllegalStateException("Calculated value is null. Check input field values.")
+}
+
+// Update the result field
+IssueManager issueManager = ComponentAccessor.getIssueManager()
+IssueService issueService = ComponentAccessor.getIssueService()
+ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+IssueService.UpdateValidationResult validationResult = issueService.validateUpdate(
+    currentUser,
+    issue.id,
+    issueService.newIssueInputParameters().addCustomFieldValue(RESULT_FIELD_ID, resultValue.toString())
+)
+
+if (validationResult.isValid()) {
+    IssueService.IssueResult updateResult = issueService.update(currentUser, validationResult)
+    if (!updateResult.isValid()) {
+        throw new IllegalStateException("Issue update failed: " + updateResult.errorCollection)
+    }
+} else {
+    throw new IllegalStateException("Issue update validation failed: " + validationResult.errorCollection)
+}
