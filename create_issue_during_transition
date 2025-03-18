@@ -1,0 +1,46 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.issue.IssueManager
+import com.atlassian.jira.issue.IssueService
+import com.atlassian.jira.user.ApplicationUser
+import com.atlassian.jira.project.Project
+import com.atlassian.jira.issue.IssueType
+import com.atlassian.jira.util.ErrorCollection
+
+// Define parameters
+String newIssueSummary = "Follow-up Task"
+String newIssueDescription = "This issue was automatically created during the workflow transition."
+String newIssueTypeName = "Task" // Adjust as needed
+
+// Get current issue and user
+Issue currentIssue = issue
+ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+Project targetProject = currentIssue.getProjectObject() // Get project from the current issue
+
+IssueManager issueManager = ComponentAccessor.getIssueManager()
+IssueService issueService = ComponentAccessor.getIssueService()
+
+IssueType issueType = issueManager.getIssueType(newIssueTypeName)
+if (issueType == null) {
+    throw new IllegalArgumentException("Issue type '${newIssueTypeName}' not found!")
+}
+
+// input parameters
+IssueService.IssueCreationValidationResult validationResult = issueService.validateCreate(
+    currentUser,
+    issueService.newIssueInputParameters()
+        .setProjectId(targetProject.id)
+        .setSummary(newIssueSummary)
+        .setDescription(newIssueDescription)
+        .setIssueTypeId(issueType.id)
+)
+
+// If validation is successful, create the issue
+if (validationResult.isValid()) {
+    IssueService.IssueResult createResult = issueService.create(currentUser, validationResult)
+    if (!createResult.isValid()) {
+        throw new IllegalStateException("Issue creation failed: " + createResult.errorCollection)
+    }
+} else {
+    throw new IllegalStateException("Issue creation validation failed: " + validationResult.errorCollection)
+}
