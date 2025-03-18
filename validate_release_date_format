@@ -1,0 +1,31 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+String errorMsgMissingField = "Release Date field must be specified before transitioning"
+String errorMsgInvalidFormat = "The Release Date must be in the format YYYY-MM-DD"
+
+// Define projects that require validation
+def validProjects = ["ALPHA", "BETA"]
+String customFieldId = "customfield_22667"
+
+def issue = issue
+def projectKey = issue.projectObject.key
+
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+def releaseDateField = customFieldManager.getCustomFieldObject(customFieldId)
+if (!releaseDateField) {
+    throw new IllegalArgumentException("Custom field '${customFieldId}' not found!")
+}
+
+def releaseDate = issue.getCustomFieldValue(releaseDateField) as String
+
+if (validProjects.contains(projectKey)) {
+    if (!releaseDate || releaseDate.trim().isEmpty()) {
+        return false, errorMsgMissingField
+    }
+    
+    if (!releaseDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
+        return false, errorMsgInvalidFormat
+    }
+}
+
+return true
