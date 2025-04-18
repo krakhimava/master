@@ -1,0 +1,55 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.IssueInputParameters
+import com.atlassian.jira.issue.MutableIssue
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.issue.IssueManager
+import com.atlassian.jira.issue.IssueInputParametersImpl
+import com.atlassian.jira.bc.issue.IssueService
+import com.atlassian.jira.project.Project
+import com.atlassian.jira.user.ApplicationUser
+import com.atlassian.jira.issue.context.IssueContext
+import java.time.DayOfWeek
+import java.time.LocalDate
+
+def issueService = ComponentAccessor.getIssueService()
+def issueManager = ComponentAccessor.getIssueManager()
+def user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+def project = issue.projectObject
+def issueTypeManager = ComponentAccessor.getIssueTypeSchemeManager()
+
+if (issue.issueType.name != "Feature") {
+    return
+}
+
+def today = LocalDate.now()
+int workingDaysToAdd = 5
+int addedDays = 0
+while (addedDays < workingDaysToAdd) {
+    today = today.plusDays(1)
+    if (!(today.dayOfWeek == DayOfWeek.SATURDAY || today.dayOfWeek == DayOfWeek.SUNDAY)) {
+        addedDays++
+    }
+}
+def dueDate = java.sql.Date.valueOf(today)
+
+// Create input parameters
+IssueInputParameters inputParams = issueService.newIssueInputParameters()
+inputParams
+    .setProjectId(project.id)
+    .setIssueTypeId("10004")
+    .setSummary("Bug created from Feature: ${issue.summary}")
+    .setReporterId(user?.key)
+    .setAssigneeId(issue.assigneeId)
+    .setDueDate(dueDate)
+    .setComponentIds(issue.componentObjects*.id as Long[])
+
+// Create the issue
+def validationResult = issueService.validateCreate(user, inputParams)
+if (validationResult.isValid()) {
+    def result = issueService.create(user, validationResult)
+    if (!result.isValid()) {
+        log.warn("Issue creation failed: ${result.errorCollection}")
+    }
+} else {
+    log.warn("Validation failed: ${validationResult.errorCollection}")
+}
