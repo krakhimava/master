@@ -1,0 +1,49 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+import com.atlassian.mail.Email
+import com.atlassian.mail.server.SMTPMailServer
+import com.atlassian.jira.user.ApplicationUser
+
+Issue issue = event.issue
+
+
+def targetProjectKey = "SAMM"
+
+if (issue.issueType.name == "Bug" && issue.projectObject.key == targetProjectKey) {
+    ApplicationUser assignee = issue.assignee
+
+    if (assignee && assignee.emailAddress) {
+        def recipientEmail = assignee.emailAddress
+        def emailSubject = "New Bug Assigned: ${issue.summary}"
+        def baseUrl = ComponentAccessor.applicationProperties.getString("jira.baseurl")
+        def emailBody = """
+            Hello ${assignee.displayName},
+
+            A new Bug has been created and assigned to you in the '${targetProjectKey}' project.
+
+            View the issue: ${baseUrl}/browse/${issue.key}
+
+            Summary: ${issue.summary}
+            Priority: ${issue.priority?.name ?: 'N/A'}
+
+            Please take a look when possible.
+
+            Regards,
+            Your Jira Bot
+        """
+
+        sendEmail(recipientEmail, emailSubject, emailBody)
+    }
+}
+
+def sendEmail(String to, String subject, String body) {
+    SMTPMailServer mailServer = ComponentAccessor.mailServerManager.defaultSMTPMailServer
+    if (mailServer) {
+        Email email = new Email(to)
+        email.setSubject(subject)
+        email.setBody(body)
+        mailServer.send(email)
+    } else {
+        log.warn("No SMTP mail server configured in Jira.")
+    }
+}
