@@ -1,0 +1,24 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.link.IssueLink
+import com.atlassian.jira.issue.link.IssueLinkType
+
+def allowedLinkTypeName = "Relates" 
+
+def issueLinkManager = ComponentAccessor.issueLinkManager
+def issueLinkTypeManager = ComponentAccessor.getComponent(IssueLinkType.Manager)
+
+
+def outwardLinks = issueLinkManager.getOutwardLinks(issue.id)
+def inwardLinks = issueLinkManager.getInwardLinks(issue.id)
+
+// Combine all links
+def allLinks = outwardLinks + inwardLinks
+
+// Fail validation
+def invalidLinks = allLinks.findAll { it.issueLinkType.name != allowedLinkTypeName }
+
+if (invalidLinks) {
+    return false
+}
+
+return true
