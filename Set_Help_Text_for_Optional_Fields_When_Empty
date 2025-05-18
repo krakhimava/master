@@ -1,0 +1,25 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+
+def quantityField = getFieldById("customfield_13328")
+def emailField = getFieldById("customfield_12828")
+def companyField = getFieldById("customfield_12338")
+
+if (!quantityField.getValue()) {
+    quantityField.setHelpText("Please specify the quantity if applicable.")
+} else {
+    quantityField.setHelpText("") // Clear help if filled
+}
+
+if (!emailField.getValue()) {
+    emailField.setHelpText("Enter a valid email address to ensure we can contact you.")
+} else {
+    emailField.setHelpText("")
+}
+
+if (!companyField.getValue()) {
+    companyField.setHelpText("Let us know your company or organization (optional, but helpful).")
+} else {
+    companyField.setHelpText("")
+}
