@@ -1,0 +1,37 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+def components = issue.getComponentObjects()
+def descriptionText = ""
+
+if (components) {
+    def componentNames = components*.name
+
+    // Define description content per component
+    if (componentNames.contains("Backend")) {
+        descriptionText = """*Environment*:  
+*Steps to Reproduce*:  
+*Expected Behavior*:  
+*Actual Behavior*:  
+*Logs*:  
+"""
+    } else if (componentNames.contains("Frontend")) {
+        descriptionText = """*Browser*:  
+*Screen Resolution*:  
+*Steps to Reproduce*:  
+*UI Elements Affected*:  
+"""
+    } else if (componentNames.contains("Integration")) {
+        descriptionText = """*API Name*:  
+*System Affected*:  
+*Request/Response Details*:  
+"""
+    } else {
+        descriptionText = "Please provide detailed steps and context for this issue."
+    }
+
+    // Only set description if it's currently empty
+    if (!issue.description || issue.description.trim().isEmpty()) {
+        issue.setDescription(descriptionText)
+        log.info("Description set based on component: ${componentNames}")
+    }
+}
