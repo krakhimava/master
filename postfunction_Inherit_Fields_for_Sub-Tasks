@@ -1,0 +1,38 @@
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.component.ComponentAccessor
+
+if (issue.isSubTask()) {
+
+    Issue parent = issue.getParentObject()
+    def userUtil = ComponentAccessor.getUserUtil()
+    
+    // Inherit Assignee if not set
+    if (!issue.getAssignee()) {
+        def parentAssignee = parent.getAssignee()
+        if (parentAssignee) {
+            issue.setAssignee(parentAssignee)
+            log.info("Assignee inherited from parent: ${parentAssignee.displayName}")
+        }
+    }
+
+    // Inherit 'Environment' field value
+    def customFieldManager = ComponentAccessor.getCustomFieldManager()
+    def envField = customFieldManager.getCustomFieldObjects(parent).find { it.name == 'Environment' }
+
+    if (envField) {
+        def subEnvValue = issue.getCustomFieldValue(envField)
+        if (!subEnvValue) {
+            def parentEnvValue = parent.getCustomFieldValue(envField)
+            issue.setCustomFieldValue(envField, parentEnvValue)
+            log.info("Environment field inherited from parent")
+        }
+    }
+
+    // Update Summary to prefix with parent issue key
+    def currentSummary = issue.getSummary()
+    if (currentSummary && !currentSummary.startsWith(parent.getKey())) {
+        def updatedSummary = "${parent.getKey()}: ${currentSummary}"
+        issue.setSummary(updatedSummary)
+        log.info("Sub-task summary updated to: $updatedSummary")
+    }
+}
