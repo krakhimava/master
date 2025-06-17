@@ -1,0 +1,23 @@
+import com.atlassian.jira.component.ComponentAccessor
+import java.text.SimpleDateFormat
+
+def labelsField = ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Labels")
+def labelManager = ComponentAccessor.getComponent(LabelManager)
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+
+def issueManager = ComponentAccessor.issueManager
+def issueService = ComponentAccessor.issueService
+
+def issue = issue
+
+// Format timestamp
+def resolutionDate = new Date()
+def labelFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm")
+def timestampLabel = "resolved_${labelFormat.format(resolutionDate)}"
+
+// Add label only if not already present
+def existingLabels = new HashSet(issue.labels)
+if (!existingLabels.contains(timestampLabel)) {
+    labelManager.addLabel(currentUser, issue.id, timestampLabel, false)
+    log.info("Label '${timestampLabel}' added to issue ${issue.key}")
+}
