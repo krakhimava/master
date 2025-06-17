@@ -1,0 +1,32 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.link.IssueLink
+
+def links = getFieldById("issuelinks")
+def linkType = getFieldById("issuelinks-linktype")
+def linkField = getFieldById("issuelinks-issues")
+
+def linkTypeValue = linkType?.getValue()
+def linkFieldValue = linkField?.getValue()
+
+log.debug("Selected Link Type: ${linkTypeValue}")
+log.debug("Linked Issues Field Value: ${linkFieldValue}")
+
+def issueLinkManager = ComponentAccessor.getIssueLinkManager()
+def existingLinks = underlyingIssue ? issueLinkManager.getInwardLinks(underlyingIssue.id) : []
+
+if (!existingLinks || existingLinks.isEmpty()) {
+    if (linkTypeValue == "related to") {
+        linkField.setRequired(true)
+        linkType.setRequired(true)
+        links.setHelpText("You must link this issue using the 'related to' type.")
+    } else {
+        linkField.setRequired(false)
+        linkType.setRequired(false)
+        links.setHelpText("")
+    }
+} else {
+    // If links already exist, don't force anything
+    linkField.setRequired(false)
+    linkType.setRequired(false)
+    links.setHelpText("")
+}
