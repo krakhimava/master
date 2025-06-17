@@ -1,0 +1,65 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.search.SearchProvider
+import com.atlassian.jira.bc.issue.search.SearchService
+import com.atlassian.jira.web.bean.PagerFilter
+import com.atlassian.jira.mail.Email
+import com.atlassian.mail.server.SMTPMailServer
+import com.atlassian.jira.util.SimpleErrorCollection
+import java.time.LocalDate
+import java.time.ZoneId
+
+def searchService = ComponentAccessor.getComponent(SearchService)
+def user = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+def issueManager = ComponentAccessor.issueManager
+def mailServer = ComponentAccessor.mailServerManager.defaultSMTPMailServer
+
+if (!mailServer) {
+    log.error("No SMTP mail server configured")
+    return
+}
+
+// JQL to get all issues
+def jqlSearch = 'labels = "DevOps team" AND duedate IS NOT EMPTY'
+
+def parseResult = searchService.parseQuery(user, jqlSearch)
+if (!parseResult.isValid()) {
+    log.error("Invalid JQL: ${parseResult.errors}")
+    return
+}
+
+def searchResults = searchService.search(user, parseResult.query, PagerFilter.getUnlimitedFilter())
+def issues = searchResults.results
+
+def today = LocalDate.now()
+def thresholdDate = today.plusDays(3)
+def zoneId = ZoneId.systemDefault()
+
+def dueSoonIssues = issues.findAll { issue ->
+    def dueDate = issue.dueDate?.toInstant()?.atZone(zoneId)?.toLocalDate()
+    dueDate && !dueDate.isBefore(today) && !dueDate.isAfter(thresholdDate)
+}
+
+if (dueSoonIssues) {
+    def issueList = dueSoonIssues.collect { "- ${it.key}: ${it.summary} (Due: ${it.dueDate})" }.join("\n")
+
+    def subject = "DevOps Tickets Approaching Due Date"
+    def body = """Hello DevOps Team,
+
+The following tickets labeled 'DevOps team' are due within the next 3 days:
+
+${issueList}
+
+Please take the necessary actions asap.
+
+This is an automated message.
+"""
+
+    def email = new Email("devopstools@wpl.com")
+    email.setSubject(subject)
+    email.setBody(body)
+
+    mailServer.send(email)
+    log.info("Notification email sent to devopstools@wpl.com")
+} else {
+    log.info("No DevOps issues due in the next 3 days.")
+}
