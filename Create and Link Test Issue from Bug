@@ -1,0 +1,42 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.IssueInputParameters
+import com.atlassian.jira.bc.issue.IssueService
+import com.atlassian.jira.issue.link.IssueLinkManager
+import com.atlassian.jira.issue.link.IssueLinkTypeManager
+
+def issueService = ComponentAccessor.getIssueService()
+def issueLinkManager = ComponentAccessor.getIssueLinkManager()
+def issueLinkTypeManager = ComponentAccessor.getComponent(IssueLinkTypeManager)
+def currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+
+// Only run if current issue type is Bug
+if (issue.issueType.name == "Bug") {
+    def issueInputParameters = issueService.newIssueInputParameters()
+    issueInputParameters.with {
+        setProjectId(issue.projectId)
+        setIssueTypeId(ComponentAccessor.constantsManager.issueTypeObjects.find { it.name == "Test" }?.id)
+        setSummary("Auto-created Test for Bug ${issue.key}")
+        setReporterId(currentUser.key)
+    }
+
+    def validationResult = issueService.validateCreate(currentUser, issueInputParameters)
+    if (validationResult.isValid()) {
+        def createResult = issueService.create(currentUser, validationResult)
+        if (createResult.isValid()) {
+            def testIssue = createResult.issue
+            
+            def linkTypeName = "validates" 
+            def linkType = issueLinkTypeManager.issueLinkTypes.find { it.name.equalsIgnoreCase(linkTypeName) }
+            
+            if (linkType) {
+                issueLinkManager.createIssueLink(issue.id, testIssue.id, linkType.id, null, currentUser)
+            } else {
+                log.warn("Issue link type '${linkTypeName}' not found. Skipping linking.")
+            }
+        } else {
+            log.error("Failed to create Test issue: " + createResult.errorCollection)
+        }
+    } else {
+        log.error("Validation failed creating Test issue: " + validationResult.errorCollection)
+    }
+}
