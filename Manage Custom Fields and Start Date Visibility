@@ -1,0 +1,30 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.fields.CustomField
+
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+def userManager = ComponentAccessor.getUserManager()
+
+def buroFieldId = "customfield_14931"
+def responsibleFieldId = "customfield_13002"
+def startDateFieldName = "Start Date"
+
+def buroField = customFieldManager.getCustomFieldObject(buroFieldId)
+def responsibleField = customFieldManager.getCustomFieldObject(responsibleFieldId)
+def startDateField = getFieldByName(startDateFieldName)
+def buroBehaviorField = getFieldById(buroFieldId)
+
+def buroValue = buroBehaviorField.getValue()
+
+// Show or hide Start Date field based on buro value
+if (buroValue) {
+    startDateField.setHidden(false)
+} else {
+    startDateField.setHidden(true)
+}
+
+// Set responsible field to Jira Automation user
+def automationUser = userManager.getUserByName("automationjira"
+if (automationUser) {
+    def responsibleBehaviorField = getFieldById(responsibleFieldId)
+    responsibleBehaviorField.setFormValue(automationUser.name)  // Use username string here
+}
