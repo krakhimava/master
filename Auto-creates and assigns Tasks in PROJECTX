@@ -1,0 +1,54 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+def issueService = ComponentAccessor.issueService
+def projectManager = ComponentAccessor.projectManager
+def userManager = ComponentAccessor.userManager
+def constantsManager = ComponentAccessor.constantsManager
+def currentUser = ComponentAccessor.jiraAuthenticationContext.getLoggedInUser()
+
+def issueInputParameters = issueService.newIssueInputParameters()
+
+def targetProjectKey = "PROJECTX"
+def targetProject = projectManager.getProjectObjByKey(targetProjectKey)
+
+if (!targetProject) {
+    log.error("Project with key '$targetProjectKey' not found.")
+    return
+}
+
+def taskType = constantsManager.allIssueTypeObjects.find { it.name == "Task" }
+if (!taskType) {
+    log.error("Issue type 'Task' not found.")
+    return
+}
+
+def automationUser = userManager.getUserByName("automation")
+if (!automationUser) {
+    log.error("Automation user not found.")
+    return
+}
+
+def priority = constantsManager.priorities.find { it.name == "Medium" }
+
+issueInputParameters.with {
+    setProjectId(targetProject.id)
+    setSummary("Auto-created Task in ${targetProjectKey}")
+    setIssueTypeId(taskType.id)
+    setDescription("This issue was created automatically as part of a scripted task.")
+    setAssigneeId(automationUser.username)  // or use .name if on older Jira
+    setReporterId(currentUser.username)
+    if (priority) setPriorityId(priority.id)
+}
+
+def validationResult = issueService.validateCreate(currentUser, issueInputParameters)
+if (!validationResult.isValid()) {
+    log.error("Issue creation validation failed: ${validationResult.errorCollection}")
+    return
+}
+
+def issueResult = issueService.create(currentUser, validationResult)
+if (issueResult.isValid()) {
+    log.info("Issue created successfully: ${issueResult.issue.key}")
+} else {
+    log.error("Issue creation failed: ${issueResult.errorCollection}")
+}
