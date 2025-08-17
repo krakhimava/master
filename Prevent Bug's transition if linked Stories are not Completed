@@ -1,0 +1,29 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.issue.link.IssueLink
+import com.opensymphony.workflow.InvalidInputException
+
+def issue = issue as Issue
+
+if (issue.issueType?.name == "Bug") {
+    def issueLinkManager = ComponentAccessor.getIssueLinkManager()
+    def linkedIssues = new HashSet<Issue>()
+
+    issueLinkManager.getOutwardLinks(issue.id)?.each { IssueLink link ->
+        linkedIssues.add(link.destinationObject)
+    }
+    issueLinkManager.getInwardLinks(issue.id)?.each { IssueLink link ->
+        linkedIssues.add(link.sourceObject)
+    }
+
+    def uncompletedStories = linkedIssues.findAll {
+        it.issueType?.name == "Story" && it.status?.name != "Completed"
+    }
+
+    if (!uncompletedStories.isEmpty()) {
+        def keys = uncompletedStories*.key.join(", ")
+        throw new InvalidInputException(
+            "You cannot move this Bug to *Fixed* status because the following Stories are not Completed: ${keys}"
+        )
+    }
+}
