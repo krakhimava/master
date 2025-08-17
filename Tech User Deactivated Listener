@@ -1,0 +1,55 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.user.ApplicationUser
+import com.atlassian.jira.event.user.UserDeactivatedEvent
+import com.atlassian.mail.Email
+import com.atlassian.mail.server.SMTPMailServer
+
+
+def event = event as UserDeactivatedEvent
+def user = event?.user as ApplicationUser
+
+if (!user) {
+    log.warn("UserDeactivatedEvent triggered but no user found")
+    return
+}
+
+// Only for username starts with "tech_"
+if (!(user.name?.toLowerCase()?.startsWith("tech_"))) {
+    log.debug("User ${user.name} deactivated, but not a technical account. Skipping.")
+    return
+}
+
+def emailAddress = user?.emailAddress
+if (!emailAddress) {
+    log.warn("Technical account ${user.name} was deactivated but has no email address")
+    return
+}
+
+// email content
+def subject = "Your Jira Technical Account Has Been Deactivated"
+def body = """Hello ${user.displayName ?: 'User'},
+
+Your Jira technical account (${user.name}) has been deactivated.  
+If you believe this was done in error, please contact the Jira administrators.
+
+Best regards,  
+Jira Support Team
+"""
+
+// Send email
+def mailServer = ComponentAccessor.getMailServerManager().defaultSMTPMailServer as SMTPMailServer
+if (!mailServer) {
+    log.error("No default SMTP mail server configured in Jira")
+    return
+}
+
+def email = new Email(emailAddress)
+email.setSubject(subject)
+email.setBody(body)
+
+try {
+    mailServer.send(email)
+    log.info("Deactivation email successfully sent to ${emailAddress} for ${user.name}")
+} catch (Exception e) {
+    log.error("Failed to send deactivation email to ${emailAddress} for ${user.name}", e)
+}
