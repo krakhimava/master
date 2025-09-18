@@ -1,0 +1,40 @@
+import com.opensymphony.workflow.InvalidInputException
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.issue.link.IssueLinkManager
+
+def targetProjectKey = "CHIF"
+def targetIssueType = "Bug"
+def targetCustomFieldName = "SRE Core"
+def requiredCustomFieldValue = "Yes"
+
+def issue = issue as Issue
+
+if (issue.projectObject?.key == targetProjectKey && issue.issueType?.name == targetIssueType) {
+
+    def customFieldManager = ComponentAccessor.getCustomFieldManager()
+    def issueLinkManager = ComponentAccessor.getIssueLinkManager()
+
+    def sreCoreField = customFieldManager.getCustomFieldObjectsByName(targetCustomFieldName)?.first()
+    if (!sreCoreField) {
+        log.error("Custom field '${targetCustomFieldName}' not found, validator cannot run.")
+        return
+    }
+
+    // Collect linked issues
+    def linkedIssues = new HashSet<Issue>()
+    issueLinkManager.getOutwardLinks(issue.id)?.each { linkedIssues.add(it.destinationObject) }
+    issueLinkManager.getInwardLinks(issue.id)?.each { linkedIssues.add(it.sourceObject) }
+
+    // Find linked issues that do not have the required custom field value
+    def invalidIssues = linkedIssues.findAll { 
+        it && it.getCustomFieldValue(sreCoreField)?.toString() != requiredCustomFieldValue
+    }
+
+    if (!invalidIssues.isEmpty()) {
+        def keys = invalidIssues*.key.join(", ")
+        throw new InvalidInputException(
+            "This Bug cannot transition because the following linked issues do not have '${targetCustomFieldName} = ${requiredCustomFieldValue}': ${keys}"
+        )
+    }
+}
