@@ -1,0 +1,32 @@
+import com.opensymphony.workflow.InvalidInputException
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.issue.link.IssueLink
+import com.atlassian.jira.issue.link.IssueLinkManager
+
+def issue = issue as Issue
+
+if (issue.issueType?.name == "Task") {
+    def issueLinkManager = ComponentAccessor.getIssueLinkManager()
+    def linkedIssues = new HashSet<Issue>()
+
+    // Collect all linked issues
+    issueLinkManager.getOutwardLinks(issue.id)?.each { IssueLink link ->
+        linkedIssues.add(link.destinationObject)
+    }
+    issueLinkManager.getInwardLinks(issue.id)?.each { IssueLink link ->
+        linkedIssues.add(link.sourceObject)
+    }
+
+    // Find all linked Stories that are not completed
+    def uncompletedStories = linkedIssues.findAll {
+        it.issueType?.name == "Story" && it.status?.name != "Completed"
+    }
+
+    if (!uncompletedStories.isEmpty()) {
+        def keys = uncompletedStories*.key.join(", ")
+        throw new InvalidInputException(
+            "This Task cannot be moved to Completed because the following Stories are not yet Completed: ${keys}"
+        )
+    }
+}
