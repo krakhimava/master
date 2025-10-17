@@ -1,0 +1,55 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.event.type.EventDispatchOption
+
+
+def issue = issue as Issue
+def issueService = ComponentAccessor.getIssueService()
+def user = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+def subTaskManager = ComponentAccessor.getSubTaskManager()
+def constantsManager = ComponentAccessor.constantsManager
+
+if (issue.issueType?.name == "Story" && issue.components*.name*.toLowerCase().contains("dev")) {
+
+    def subTaskIssueTypeName = "Sub-task" 
+    def subTaskIssueType = constantsManager.allIssueTypeObjects.find { 
+        it.name == subTaskIssueTypeName && it.isSubTask() 
+    }
+    
+    if (!subTaskIssueType) {
+        log.error("No sub-task issue type named '${subTaskIssueTypeName}' found. Cannot create subtasks.")
+        return
+    }
+
+    def project = issue.projectObject
+    
+    def assigneeForSubtask = issue.assignee ?: user 
+    def assigneeName = assigneeForSubtask?.name
+
+    def summaries = ["Test env", "Prod env"]
+
+    summaries.each { summary ->
+        def params = issueService.newIssueInputParameters()
+        params
+            .setProjectId(project.id)
+            .setIssueTypeId(subTaskIssueType.id)
+            .setSummary(summary)
+            .setReporterId(user?.name)
+            .setAssigneeId(assigneeName)
+            .setParentId(issue.id)
+
+        def validation = issueService.validateSubTaskCreate(user, params)
+        if (validation.isValid()) {
+            def result = issueService.create(user, validation)
+            if (result.isValid()) {
+                def subtask = result.issue
+                // IssueLink
+                subTaskManager.createSubTaskIssueLink(issue, subtask, user)
+                log.info("Created subtask '${summary}' for ${issue.key}, assigned to ${assigneeName}")
+            } else {
+                log.error("Failed to create subtask '${summary}' for ${issue.key}. Errors: ${result.errorCollection.errors}, Warnings: ${result.errorCollection.warnings}")
+            }
+        } else {
+            log.error("Validation failed for '${summary}'. Errors: ${validation.errorCollection.errors}, Warnings: ${validation.errorCollection.warnings}")
+        }
+    }
