@@ -27,7 +27,7 @@ if (issue.projectObject.key == requiredProjectKey && issue.issueType?.name == re
     linkedIssues = linkedIssues.unique().findAll { it != null }
 
     if (!linkedIssues) {
-        log.warn("[ComplianceValidator] ⚠ No linked issues found for ${issue.key}. Blocking transition.")
+        log.warn("[ComplianceValidator] No linked issues found for ${issue.key}. Blocking transition.")
         throw new InvalidInputException("Transition blocked: No linked issues found. All linked issues must have '${requiredFieldName}' = ${requiredFieldValue}.")
     }
 
