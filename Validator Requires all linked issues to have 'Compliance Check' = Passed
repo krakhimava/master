@@ -1,0 +1,47 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.fields.CustomField
+import com.atlassian.jira.issue.Issue
+import com.opensymphony.workflow.InvalidInputException
+
+
+def issue = issue as Issue
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+def issueLinkManager = ComponentAccessor.getIssueLinkManager()
+
+def requiredProjectKey = "CHIF"
+def requiredIssueType = "Story"
+def requiredFieldName = "Compliance Check"
+def requiredFieldValue = "Passed"
+
+if (issue.projectObject.key == requiredProjectKey && issue.issueType?.name == requiredIssueType) {
+
+    def CustomField complianceField = customFieldManager.getCustomFieldObjectByName(requiredFieldName)
+    if (!complianceField) {
+        log.error("[ComplianceValidator] Field '${requiredFieldName}' not found in Jira.")
+        throw new InvalidInputException("Transition failed: Configuration error (field '${requiredFieldName}' not found).")
+    }
+
+    def linkedIssues = issueLinkManager.getOutwardLinks(issue.id)*.destinationObject +
+                       issueLinkManager.getInwardLinks(issue.id)*.sourceObject
+
+    linkedIssues = linkedIssues.unique().findAll { it != null }
+
+    if (!linkedIssues) {
+        log.warn("[ComplianceValidator] ⚠ No linked issues found for ${issue.key}. Blocking transition.")
+        throw new InvalidInputException("Transition blocked: No linked issues found. All linked issues must have '${requiredFieldName}' = ${requiredFieldValue}.")
+    }
+
+    def notCompliant = linkedIssues.findAll { linked ->
+        def value = linked.getCustomFieldValue(complianceField)?.toString()?.trim()?.toLowerCase()
+        def required = requiredFieldValue.toLowerCase()
+        value != required
+    }
+
+    if (notCompliant) {
+        def keys = notCompliant*.key.join(", ")
+        log.warn("[ComplianceValidator] Validation failed for ${issue.key}. Non-compliant issues: ${keys}")
+        throw new InvalidInputException("Transition blocked: The following linked issues do not have '${requiredFieldName}' = ${requiredFieldValue} → ${keys}")
+    }
+
+    log.info("[ComplianceValidator] All ${linkedIssues.size()} linked issues for ${issue.key} have '${requiredFieldName}' = ${requiredFieldValue}. Transition allowed.")
+}
