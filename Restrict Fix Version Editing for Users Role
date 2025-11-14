@@ -1,0 +1,39 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.security.roles.ProjectRoleManager
+import com.onresolve.jira.groovy.user.FormField
+
+def targetProjectKey = "NOLIA"
+def requiredRoleName = "Users"
+def fieldsToCheck = ["Fix Version/s"]
+
+def issueContext = underlyingIssue ?: issue 
+def project = issueContext?.projectObject
+if (!project || project.key != targetProjectKey) {
+    return
+}
+
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+if (!currentUser) {
+    return
+}
+
+def projectRoleManager = ComponentAccessor.getComponent(ProjectRoleManager)
+def restrictedRole = projectRoleManager.getProjectRole(requiredRoleName)
+if (!restrictedRole) {
+    return
+}
+
+def isUserInRestrictedRole = projectRoleManager.isUserInProjectRole(
+    currentUser,
+    restrictedRole,
+    project
+)
+
+if (isUserInRestrictedRole) {
+    fieldsToCheck.each { fieldName ->
+        FormField field = getFieldByName(fieldName)
+        if (field) {
+            field.setReadOnly(true)
+        }
+    }
+}
