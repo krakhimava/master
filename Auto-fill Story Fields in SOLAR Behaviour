@@ -1,0 +1,47 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.onresolve.jira.groovy.user.FormField
+
+def projectKey = "SOLAR"
+def issueContext = issue
+def project = issueContext?.projectObject
+def issueType = issueContext?.issueType?.name
+
+if (!project || project.key != projectKey || issueType != "Story") {
+    return
+}
+
+FormField epicField = getFieldById("customfield_10008")
+FormField storyPointsField = getFieldById("customfield_10016")
+FormField componentField = getFieldById("components")
+
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+def groupManager = ComponentAccessor.groupManager
+
+if (epicField && !epicField.getValue()) {
+    epicField.setFormValue("SOLAR-1")
+}
+
+if (storyPointsField && !storyPointsField.getValue()) {
+    storyPointsField.setFormValue("3")
+}
+
+def userGroups = groupManager.getGroupNamesForUser(currentUser) ?: []
+def lowerCaseGroups = userGroups.collect { it.toLowerCase() }
+
+def componentsToSet = []
+
+if (lowerCaseGroups.any { it.contains("backend-team") }) {
+    componentsToSet << "Backend"
+}
+
+if (lowerCaseGroups.any { it.contains("frontend-team") }) {
+    componentsToSet << "Frontend"
+}
+
+if (lowerCaseGroups.any { it.contains("devops") }) {
+    componentsToSet << "Infrastructure"
+}
+
+if (componentField && !componentField.getValue() && !componentsToSet.isEmpty()) {
+    componentField.setFormValue(componentsToSet)
+}
