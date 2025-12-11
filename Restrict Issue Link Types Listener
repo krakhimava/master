@@ -1,0 +1,24 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.event.link.LinkIssueEvent
+import com.atlassian.jira.issue.link.IssueLinkTypeManager
+
+def allowedLinkType = "Blocks"
+def targetProject = "ALPHA"
+
+def event = event as LinkIssueEvent
+def sourceIssue = event.sourceIssue
+def destinationIssue = event.destinationIssue
+
+if (sourceIssue.projectObject.key != targetProject && 
+    destinationIssue.projectObject.key != targetProject) {
+    return
+}
+
+def linkTypeManager = ComponentAccessor.getComponent(IssueLinkTypeManager)
+def linkType = linkTypeManager.getIssueLinkType(event.linkTypeId)
+
+if (linkType?.name != allowedLinkType) {
+    throw new IllegalArgumentException(
+        "Only '${allowedLinkType}' link type is allowed in project ${targetProject}."
+    )
+}
