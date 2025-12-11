@@ -1,0 +1,21 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+def targetProjectKey = "OMEGA"
+def requiredLabelFragment = "reviewed"
+
+def issue = issue
+
+if (issue.projectObject.key != targetProjectKey) {
+    return true
+}
+
+if (!issue.assignee) {
+    invalid("You must assign this issue before marking it Ready for QA.")
+}
+
+def labels = issue.labels*.label?.collect { it.toLowerCase() }
+if (!labels.any { it.contains(requiredLabelFragment) }) {
+    invalid("Issue must contain a label with 'reviewed' before transition.")
+}
+
+return true
