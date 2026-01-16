@@ -1,0 +1,43 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+import org.apache.log4j.Logger
+
+def log = Logger.getLogger("com.acme.workflows")
+def issue = event.issue as Issue
+
+if (!issue || !issue.isSubTask()) return
+def parent = issue.parentObject
+if (!parent || parent.projectObject.key != "ORION") return
+
+def subTasks = parent.subTaskObjects
+def allDone = subTasks.every { it.status.name == "Done" }
+
+if (!allDone) {
+    log.debug("Not all sub-tasks for ${parent.key} are Done yet.")
+    return
+}
+
+def workflowManager = ComponentAccessor.workflowManager
+def issueService = ComponentAccessor.issueService
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+
+def workflow = workflowManager.getWorkflow(parent)
+def action = workflow.allActions.find { it.name.equalsIgnoreCase("Done") }
+
+if (action) {
+    def params = issueService.newIssueInputParameters()
+    params.setSkipScreenCheck(true)
+    
+    def validation = issueService.validateTransition(currentUser, parent.id, action.id, params)
+
+    if (validation.isValid()) {
+        def result = issueService.transition(currentUser, validation)
+        if (!result.isValid()) {
+            log.error("Transition failed for ${parent.key}: ${result.errorCollection}")
+        }
+    } else {
+        log.error("Validation failed for ${parent.key}: ${validation.errorCollection}")
+    }
+} else {
+    log.warn("Could not find a transition named 'Done' for issue ${parent.key}")
+}
