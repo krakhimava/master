@@ -1,0 +1,29 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.opensymphony.workflow.InvalidInputException
+import org.apache.log4j.Logger
+
+def log = Logger.getLogger("com.acme.validators")
+
+if (!issue || issue.projectObject.key != "ATLAS" || issue.issueType.name != "Release") {
+    return true
+}
+
+def linkManager = ComponentAccessor.issueLinkManager
+
+def linkedIssues = []
+linkedIssues.addAll(linkManager.getOutwardLinks(issue.id)*.destinationObject)
+linkedIssues.addAll(linkManager.getInwardLinks(issue.id)*.sourceObject)
+
+if (!linkedIssues || linkedIssues.isEmpty()) return true
+
+def openBugs = linkedIssues.findAll { 
+    it.issueType.name == "Bug" && it.status.name != "Done" 
+}
+
+if (openBugs) {
+    def keys = openBugs*.key.join(", ")
+    log.warn("Release ${issue.key} blocked by open Bugs: ${keys}")
+    throw new InvalidInputException("Cannot deploy. The following Bugs are not Done: ${keys}")
+}
+
+return true
