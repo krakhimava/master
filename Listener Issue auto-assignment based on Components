@@ -1,0 +1,51 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+import org.apache.log4j.Logger
+
+def log = Logger.getLogger("com.acme.assignment")
+def issue = event.issue as Issue
+
+if (!issue || issue.projectObject.key != "PHOENIX") return
+
+def components = issue.components
+if (!components) return
+
+def componentName = components.first().name
+
+def userMap = [
+    "Frontend": "alice",
+    "Backend" : "bob",
+    "Database": "charlie"
+]
+
+def targetUsername = userMap[componentName]
+if (!targetUsername) return
+
+def userManager = ComponentAccessor.userManager
+def issueService = ComponentAccessor.issueService
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+
+def targetUser = userManager.getUserByName(targetUsername)
+if (!targetUser) {
+    log.error("User ${targetUsername} not found for component ${componentName}")
+    return
+}
+
+if (issue.assignee?.key == targetUser.key) {
+    return
+}
+
+def params = issueService.newIssueInputParameters()
+params.setAssigneeId(targetUser.name)
+
+def validation = issueService.validateUpdate(currentUser, issue.id, params)
+
+if (validation.isValid()) {
+    def result = issueService.update(currentUser, validation)
+    
+    if (!result.isValid()) {
+        log.error("Update failed: ${result.errorCollection}")
+    }
+} else {
+    log.error("Validation failed: ${validation.errorCollection}")
+}
