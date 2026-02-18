@@ -1,0 +1,35 @@
+import com.atlassian.jira.component.ComponentAccessor
+import org.apache.log4j.Logger
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+
+def log = Logger.getLogger("com.acme.escalation")
+
+def issue = event.issue
+if (!issue || issue.projectObject.key != "PHOENIX") return
+if (issue.priority?.name != "High" || issue.status.statusCategory.key == "done") return
+
+// Calculate Days
+def createdDate = issue.getCreated().toInstant()
+def now = Instant.now()
+def daysOpen = ChronoUnit.DAYS.between(createdDate, now)
+if (daysOpen < 3) return
+
+def commentManager = ComponentAccessor.commentManager
+def jiraAuthenticationContext = ComponentAccessor.jiraAuthenticationContext
+def currentUser = jiraAuthenticationContext.loggedInUser
+
+// Avoid duplicate comments
+def alreadyCommented = commentManager.getComments(issue).any {
+    it.body.contains("SLA Alert")
+}
+if (alreadyCommented) return
+
+commentManager.create(
+    issue,
+    currentUser,
+    "SLA Alert: This high-priority issue has been open for ${daysOpen} days. Please review.",
+    true
+)
+
+log.info("SLA alert comment added to ${issue.key}")
