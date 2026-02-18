@@ -1,0 +1,26 @@
+import com.atlassian.jira.component.ComponentAccessor
+import org.apache.log4j.Logger
+
+def log = Logger.getLogger("com.acme.security")
+
+def link = event.issueLink
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+def groupManager = ComponentAccessor.groupManager
+def linkManager = ComponentAccessor.issueLinkManager
+
+if (!link || !currentUser) return
+
+def sourceProject = link.sourceObject.projectObject.key
+def destProject = link.destinationObject.projectObject.key
+
+// Allow same-project linking
+if (sourceProject == destProject) return
+
+// Check permission group
+def allowedGroup = "jira-crossproject-linkers"
+def isAllowed = groupManager.isUserInGroup(currentUser, allowedGroup)
+
+if (!isAllowed) {
+    log.warn("Unauthorized cross-project link attempt by ${currentUser.name}")
+    linkManager.removeIssueLink(link, currentUser)
+}
