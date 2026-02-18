@@ -1,0 +1,35 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.opensymphony.workflow.InvalidInputException
+
+if (!issue || issue.projectObject.key != "ATLAS" || issue.issueType.name != "Release") {
+    return true
+}
+
+def linkManager = ComponentAccessor.issueLinkManager
+def customFieldManager = ComponentAccessor.customFieldManager
+
+if (!issue.assignee) {
+    throw new InvalidInputException("Release Owner must be assigned before deployment.")
+}
+
+def coverageField = customFieldManager.getCustomFieldObjectByName("Test Coverage")
+def coverageValue = issue.getCustomFieldValue(coverageField) as Double
+
+if (!coverageValue || coverageValue < 90) {
+    throw new InvalidInputException("Test Coverage must be at least 90% before deployment.")
+}
+
+def linkedIssues = []
+linkedIssues.addAll(linkManager.getOutwardLinks(issue.id)*.destinationObject)
+linkedIssues.addAll(linkManager.getInwardLinks(issue.id)*.sourceObject)
+
+def openBugs = linkedIssues.findAll {
+    it.issueType.name == "Bug" && it.status.name != "Done"
+}
+
+if (openBugs) {
+    def keys = openBugs*.key.join(", ")
+    throw new InvalidInputException("Open Bugs detected: ${keys}")
+}
+
+return true
