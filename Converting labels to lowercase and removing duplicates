@@ -1,0 +1,32 @@
+import com.atlassian.jira.component.ComponentAccessor
+import org.apache.log4j.Logger
+import com.atlassian.jira.issue.IssueInputParametersImpl
+
+def log = Logger.getLogger("com.acme.labels")
+def issue = event.issue
+
+def labels = issue.labels
+if (!labels) return
+
+def normalized = labels.collect { it.label.toLowerCase() }.unique() as Set<String>
+
+def currentLabels = labels*.label.sort()
+if (currentLabels == normalized.toList().sort()) {
+    return
+}
+
+def issueService = ComponentAccessor.issueService
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+
+def params = new IssueInputParametersImpl()
+params.setLabels(normalized)
+params.setSkipScreenCheck(true)
+
+def validation = issueService.validateUpdate(currentUser, issue.id, params)
+
+if (validation.isValid()) {
+    issueService.update(currentUser, validation)
+    log.info("Labels normalized for ${issue.key}: ${normalized}")
+} else {
+    log.error("Failed to normalize labels for ${issue.key}: ${validation.errorCollection.errorMessages}")
+}
