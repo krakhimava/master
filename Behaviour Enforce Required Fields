@@ -1,0 +1,20 @@
+import com.onresolve.jira.groovy.user.FormField
+
+def environmentField = getFieldById("customfield_10800")
+def rootCauseField = getFieldById("customfield_12505")
+
+def projectKey = issueContext?.projectObject?.key
+def issueTypeName = issueContext?.issueType?.name
+
+if (projectKey == "NEPTUNE" && issueTypeName == "Incident") {
+    
+    environmentField?.setHidden(false)
+    environmentField?.setRequired(true)
+    
+    rootCauseField?.setHidden(false)
+    rootCauseField?.setRequired(true)
+
+} else {
+    environmentField?.setRequired(false)
+    rootCauseField?.setRequired(false)
+}
