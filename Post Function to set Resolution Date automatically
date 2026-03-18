@@ -1,0 +1,41 @@
+import com.atlassian.jira.component.ComponentAccessor
+import java.sql.Timestamp
+import com.atlassian.jira.event.type.EventDispatchOption
+
+def issue = issue
+def changeHistoryManager = ComponentAccessor.changeHistoryManager
+
+if (issue.projectObject.key != "GALAXY") return
+if (issue.status.statusCategory.key != "done") return
+
+def startTime = changeHistoryManager.getChangeItemsForField(issue, "status").find {
+    def status = ComponentAccessor.constantsManager.getStatus(it.to as String)
+    status?.statusCategory?.key == "inprogress"
+}?.created?.time
+
+def currentTime = System.currentTimeMillis()
+def durationMillis = startTime ? (currentTime - startTime) : 0
+def oneHourMillis = 60 * 60 * 1000
+
+if (durationMillis < oneHourMillis) return
+
+def constantsManager = ComponentAccessor.constantsManager
+def issueManager = ComponentAccessor.issueManager
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+
+boolean needsUpdate = false
+
+if (!issue.resolution) {
+    def defaultResolution = constantsManager.resolutions.find { it.name == "Done" } ?: constantsManager.resolutions.iterator().next()
+    issue.setResolution(defaultResolution)
+    needsUpdate = true
+}
+
+if (!issue.resolutionDate) {
+    issue.setResolutionDate(new Timestamp(currentTime))
+    needsUpdate = true
+}
+
+if (needsUpdate) {
+    issueManager.updateIssue(currentUser, issue, EventDispatchOption.DO_NOT_DISPATCH, false)
+}
