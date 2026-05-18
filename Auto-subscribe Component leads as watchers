@@ -1,0 +1,38 @@
+import com.atlassian.jira.component.ComponentAccessor
+import org.apache.log4j.Logger
+
+def log = Logger.getLogger("com.acme.watchers")
+
+if (issue == null || issue.projectObject?.key != "NOVA") return
+
+def watcherManager = ComponentAccessor.watcherManager
+def userManager = ComponentAccessor.userManager
+
+def componentLeadMap = [
+    "Frontend": "frontend.lead",
+    "Backend" : "backend.lead",
+    "API"     : "api.lead"
+]
+
+def components = issue.components
+if (!components || components.isEmpty()) return
+
+components.each { component ->
+
+    def username = componentLeadMap[component.name]
+
+    if (!username) {
+        log.debug("No watcher mapping for component ${component.name}")
+    } else {
+
+        def user = userManager.getUserByName(username)
+
+        if (!user) {
+            log.warn("User ${username} not found")
+        } else if (!watcherManager.isWatching(user, issue)) {
+
+            watcherManager.startWatching(user, issue)
+            log.info("${username} added as watcher to ${issue.key}")
+        }
+    }
+}
