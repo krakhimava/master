@@ -1,0 +1,42 @@
+import com.atlassian.jira.component.ComponentAccessor
+import org.apache.log4j.Logger
+import com.atlassian.jira.web.bean.PagerFilter
+
+def log = Logger.getLogger("com.acme.duplicates")
+
+def issue = event?.issue ?: event?.getIssue()
+if (!issue || issue.projectObject?.key != "TITAN") return
+
+def searchService = ComponentAccessor.searchService
+def jiraAuthContext = ComponentAccessor.jiraAuthenticationContext
+def commentManager = ComponentAccessor.commentManager
+
+def currentUser = jiraAuthContext.loggedInUser
+
+def normalizedSummary = issue.summary
+    ?.toLowerCase()
+    ?.replaceAll("[^a-zA-Z0-9 ]", "")
+    ?.trim()
+
+if (!normalizedSummary) return
+
+def jql = "project = TITAN AND summary ~ \"${normalizedSummary}\" AND key != \"${issue.key}\""
+
+def parseResult = searchService.parseQuery(currentUser, jql)
+
+if (!parseResult.isValid()) {
+    log.warn("Duplicate detection JQL invalid: ${parseResult.errors.errorMessages}")
+    return
+}
+
+def pagerFilter = new PagerFilter(0, 5) 
+def results = searchService.search(currentUser, parseResult.query, pagerFilter)
+
+if (results.results) {
+    def duplicates = results.results.take(5)*.key.join(", ")
+    def commentBody = "⚠ Potential duplicate issues detected: ${duplicates}"
+
+    commentManager.create(issue, currentUser, commentBody, false)
+
+    log.info("Potential duplicates found for ${issue.key}: ${duplicates}")
+}
