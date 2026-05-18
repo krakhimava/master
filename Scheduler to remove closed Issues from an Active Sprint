@@ -1,0 +1,45 @@
+import com.atlassian.jira.component.ComponentAccessor
+import org.apache.log4j.Logger
+
+def log = Logger.getLogger("com.acme.sprints")
+
+def searchService = ComponentAccessor.searchService
+def issueService = ComponentAccessor.issueService
+def jiraAuthContext = ComponentAccessor.jiraAuthenticationContext
+def customFieldManager = ComponentAccessor.customFieldManager
+
+def currentUser = jiraAuthContext.loggedInUser
+
+def sprintField = customFieldManager.getCustomFieldObjectsByName("Sprint")?.first()
+
+if (!sprintField) {
+    log.error("Sprint field not found")
+    return
+}
+
+def jql = 'project = AURORA AND sprint in openSprints() AND statusCategory = Done'
+
+def parseResult = searchService.parseQuery(currentUser, jql)
+
+if (!parseResult.isValid()) {
+    log.error("Invalid JQL: ${jql}")
+    return
+}
+
+def searchResult = searchService.search(currentUser, parseResult.query,
+    com.atlassian.jira.web.bean.PagerFilter.unlimitedFilter)
+
+searchResult.results.each { issue ->
+
+    def params = issueService.newIssueInputParameters()
+    params.addCustomFieldValue(sprintField.idAsLong, null)
+
+    def validation = issueService.validateUpdate(currentUser, issue.id, params)
+
+    if (validation.isValid()) {
+        issueService.update(currentUser, validation)
+        log.info("Removed ${issue.key} from active sprint")
+    } else {
+        log.warn("Could not update ${issue.key}: ${validation.errorCollection}")
+    }
+}
