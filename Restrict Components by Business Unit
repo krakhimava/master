@@ -1,0 +1,47 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+def businessUnitField = getFieldByName("Business Unit")
+def componentField = getFieldById("components")
+
+def selectedBU = businessUnitField?.getValue() as String
+
+def allowedComponentsMap = [
+    "Finance" : ["Billing", "Payments", "Tax"],
+    "HR"      : ["Recruitment", "Payroll", "Benefits"],
+    "Sales"   : ["CRM", "Quotes", "Contracts"]
+]
+
+def projectComponentManager = ComponentAccessor.projectComponentManager
+def projectKey = getProjectKey()
+def project = ComponentAccessor.projectManager.getProjectObjByKey(projectKey)
+
+if (!project) return
+
+def allProjectComponents = projectComponentManager.findAllForProject(project.id)
+def validComponentNames = allowedComponentsMap[selectedBU]
+
+if (validComponentNames) {
+    def filteredComponents = allProjectComponents.findAll { component ->
+        validComponentNames.contains(component.name)
+    }
+    
+    def optionsMap = filteredComponents.collectEntries { component ->
+        [(component.id.toString()) : component.name]
+    }
+    
+    componentField.setFieldOptions(optionsMap)
+    
+    def currentValues = componentField.getValue() as List
+    if (currentValues) {
+        def validValues = currentValues.findAll { val ->
+            def compId = val.toString()
+            optionsMap.containsKey(compId)
+        }
+        componentField.setFormValue(validValues)
+    }
+} else {
+    def allOptionsMap = allProjectComponents.collectEntries { component ->
+        [(component.id.toString()) : component.name]
+    }
+    componentField.setFieldOptions(allOptionsMap)
+}
