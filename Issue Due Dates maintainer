@@ -1,0 +1,42 @@
+import com.atlassian.jira.component.ComponentAccessor
+import java.time.LocalDate
+import java.time.ZoneId
+import java.util.Date
+
+def issue = event.issue
+
+if (!issue || issue.projectObject.key != "EVEREST") return
+
+def priorityDays = [
+    "Highest": 1,
+    "High"   : 3,
+    "Medium" : 7,
+    "Low"    : 14
+]
+
+def days = priorityDays[issue.priority?.name]
+
+if (days == null) return
+
+def localDueDate = LocalDate.now().plusDays(days)
+def javaUtilDate = Date.from(localDueDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+
+def dateTimeFormatterFactory = ComponentAccessor.getComponent(com.atlassian.jira.datetime.DateTimeFormatterFactory)
+def jiraFormatter = dateTimeFormatterFactory.formatter().withStyle(com.atlassian.jira.datetime.DateTimeStyle.DATE)
+def formattedDueDate = jiraFormatter.format(javaUtilDate)
+
+def issueService = ComponentAccessor.issueService
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+
+def params = issueService.newIssueInputParameters()
+params.setDueDate(formattedDueDate)
+
+def validation = issueService.validateUpdate(currentUser, issue.id, params)
+
+if (validation.isValid()) {
+    def updateContext = com.atlassian.jira.issue.IssueInputParameters.UpdateContext.builder()
+        .skipInspirations()
+        .build()
+        
+    issueService.update(currentUser, validation, com.atlassian.jira.event.type.EventDispatchOption.DO_NOT_DISPATCH, false)
+}
