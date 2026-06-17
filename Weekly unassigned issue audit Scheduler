@@ -1,0 +1,48 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.web.bean.PagerFilter
+import com.atlassian.jira.issue.comments.CommentParameters
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+
+def searchService = ComponentAccessor.searchService
+def commentManager = ComponentAccessor.commentManager
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+
+def jql = 'project = OLYMPUS AND assignee is EMPTY AND statusCategory != Done'
+def parseResult = searchService.parseQuery(currentUser, jql)
+
+if (!parseResult.isValid()) {
+    log.error("Wrong JQL: ${parseResult.errors}")
+    return
+}
+
+def searchResults = searchService.search(
+    currentUser,
+    parseResult.query,
+    PagerFilter.unlimitedFilter
+)
+
+def issues = searchResults.getIssues()
+
+issues.each { issue ->
+
+    def createdInstant = Instant.ofEpochMilli(issue.created.time)
+    def age = ChronoUnit.DAYS.between(createdInstant, Instant.now())
+
+    if (age >= 14) {
+
+        def alreadyFlagged = commentManager.getComments(issue).any { comment ->
+            comment.body.contains("Unassigned issue audit")
+        }
+
+        if (!alreadyFlagged) {
+            def commentParameters = CommentParameters.builder()
+                .issue(issue)
+                .author(currentUser)
+                .body("Unassigned Issue Audit: This issue has remained unassigned for ${age} days.")
+                .build()
+                
+            commentManager.create(commentParameters, true) 
+        }
+    }
+}
