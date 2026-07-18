@@ -1,0 +1,29 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+def issue = event.issue
+if (!issue || issue.issueType.name != "Story") return
+
+if (issue.fixVersions) return
+
+def customFieldManager = ComponentAccessor.customFieldManager
+def issueService = ComponentAccessor.issueService
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+
+def epicLinkField = customFieldManager.getCustomFieldObjectByName("Epic Link")
+if (!epicLinkField) return
+
+def epic = issue.getCustomFieldValue(epicLinkField) as com.atlassian.jira.issue.Issue
+if (!epic || !epic.fixVersions) return
+
+def fixVersionIdsStrings = epic.fixVersions.collect { it.id.toString() } as String[]
+
+def params = issueService.newIssueInputParameters()
+params.setFixVersionIds(fixVersionIdsStrings)
+
+def validation = issueService.validateUpdate(currentUser, issue.id, params)
+
+if (validation.isValid()) {
+    issueService.update(currentUser, validation)
+} else {
+    log.error("Validation error copying Fix Version from Epic: " + validation.errorCollection.errorMessages)
+}
