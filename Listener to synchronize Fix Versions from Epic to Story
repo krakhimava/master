@@ -1,0 +1,28 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+def issue = event.issue
+if (!issue || issue.issueType.name != "Story") return
+
+def issueLinkManager = ComponentAccessor.issueLinkManager
+def issueService = ComponentAccessor.issueService
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+
+if (issue.fixVersions) return
+
+def epicLink = issueLinkManager.getInwardLinks(issue.id).find {
+    it.issueLinkType.name == "Epic-Story Link"
+}
+
+if (!epicLink) return
+
+def epic = epicLink.sourceObject
+if (!epic.fixVersions) return
+
+def params = issueService.newIssueInputParameters()
+params.setFixVersionIds(epic.fixVersions*.id as Long[])
+
+def validation = issueService.validateUpdate(currentUser, issue.id, params)
+
+if (validation.isValid()) {
+    issueService.update(currentUser, validation)
+}
