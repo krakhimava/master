@@ -1,0 +1,33 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.web.bean.PagerFilter
+
+def searchService = ComponentAccessor.searchService
+def issueService = ComponentAccessor.issueService
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+
+def jql = 'project = ABS and status = Draft AND labels not in ("archive-candidate")'
+
+def parse = searchService.parseQuery(currentUser, jql)
+if (!parse.isValid()) return
+
+def results = searchService.search(currentUser, parse.query, PagerFilter.getUnlimitedFilter())
+
+def sixtyDaysAgo = new Date() - 60
+
+results.results.each { issue ->
+    if (issue.updated.before(sixtyDaysAgo)) {
+        def currentLabels = issue.labels*.label ?: []
+        def newLabels = (currentLabels + "archive-candidate").unique() as Set<String>
+
+        def params = issueService.newIssueInputParameters()
+        params.setLabels(newLabels)
+
+        def validation = issueService.validateUpdate(currentUser, issue.id, params)
+
+        if (validation.isValid()) {
+            issueService.update(currentUser, validation)
+        } else {
+            log.error("Validation error adding label to ${issue.key}: " + validation.errorCollection.errorMessages)
+        }
+    }
+}
