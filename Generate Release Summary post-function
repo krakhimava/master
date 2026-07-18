@@ -1,0 +1,32 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.ModifiedValue
+import com.atlassian.jira.issue.util.DefaultIssueChangeHolder
+
+if (!issue || issue.issueType.name != "Release") return
+
+def linkManager = ComponentAccessor.issueLinkManager
+def customFieldManager = ComponentAccessor.customFieldManager
+def issueManager = ComponentAccessor.issueManager
+
+def releaseNotesField = customFieldManager.getCustomFieldObjectByName("Release Notes Summary")
+if (!releaseNotesField) return
+
+def stories = linkManager.getOutwardLinks(issue.id)
+    .collect { it.destinationObject }
+    .findAll { it?.issueType?.name == "Story" }
+
+if (!stories) return
+
+def summary = stories
+    .sort { it.key }
+    .collect { "- ${it.key}: ${it.summary}" }
+    .join("\n")
+
+def mutableIssue = issueManager.getIssueObject(issue.id)
+
+releaseNotesField.updateValue(
+    null, 
+    mutableIssue, 
+    new ModifiedValue(mutableIssue.getCustomFieldValue(releaseNotesField), summary), 
+    new DefaultIssueChangeHolder()
+)
