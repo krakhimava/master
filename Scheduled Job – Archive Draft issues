@@ -1,0 +1,34 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.web.bean.PagerFilter
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+
+def searchService = ComponentAccessor.searchService
+def issueService = ComponentAccessor.issueService
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+
+def jql = 'project = ABS and status = Draft AND labels not in ("archive-candidate")'
+
+def parse = searchService.parseQuery(currentUser, jql)
+if (!parse.isValid()) return
+
+def results = searchService.search(currentUser, parse.query, PagerFilter.unlimitedFilter)
+
+results.results.each { issue ->
+
+    def age = ChronoUnit.DAYS.between(issue.updated.toInstant(), Instant.now())
+
+    if (age >= 60) {
+
+        def labels = issue.labels*.label + "archive-candidate"
+
+        def params = issueService.newIssueInputParameters()
+        params.setLabels(labels.unique())
+
+        def validation = issueService.validateUpdate(currentUser, issue.id, params)
+
+        if (validation.isValid()) {
+            issueService.update(currentUser, validation)
+        }
+    }
+}
