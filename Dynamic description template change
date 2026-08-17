@@ -1,0 +1,52 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.bc.project.component.ProjectComponent
+
+def componentField = getFieldById("components")
+def descriptionField = getFieldById("description")
+
+if (!componentField || !descriptionField) return
+
+def selectedComponents = componentField.getValue() as List
+
+if (!selectedComponents) return
+
+def firstComponent = selectedComponents.first()
+def componentName = ""
+
+if (firstComponent instanceof ProjectComponent) {
+    componentName = firstComponent.name
+} else if (firstComponent) {
+    def componentManager = ComponentAccessor.projectComponentManager
+    componentName = componentManager.find(firstComponent.toString().toLong())?.name ?: ""
+}
+
+def descriptionTemplates = [
+    "Mars": """Issue Summary:
+Business Impact:
+Steps to Reproduce:
+Expected Result:
+Actual Result:""",
+
+    "Jupiter": """Change Request:
+Business Requirement:
+Current Behaviour:
+Expected Behaviour:
+Acceptance Criteria:""",
+
+    "Saturn": """Technical Issue:
+Environment:
+Technical Details:
+Error Message:
+Troubleshooting Performed:
+Expected Resolution:"""
+]
+
+def template = descriptionTemplates[componentName]
+
+if (!template) return
+
+def currentDescription = descriptionField.getValue()?.toString()
+
+if (!currentDescription?.trim()) {
+    descriptionField.setFormValue(template)
+}
