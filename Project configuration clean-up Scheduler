@@ -1,0 +1,35 @@
+import com.atlassian.jira.component.ComponentAccessor
+import org.apache.log4j.Logger
+
+def log = Logger.getLogger("com.acme.configuration.audit")
+
+def projectManager = ComponentAccessor.projectManager
+
+def requiredIssueTypes = [
+    "Story",
+    "Task",
+    "Bug"
+]
+
+projectManager.projectObjects.each { project ->
+
+    def issueTypes = project.issueTypes
+
+    if (!issueTypes) {
+        log.warn("Configuration drift: ${project.key} has no issue type configuration")
+        return
+    }
+
+    def configuredNames = issueTypes*.name
+
+    def missingTypes = requiredIssueTypes.findAll {
+        !configuredNames.contains(it)
+    }
+
+    if (missingTypes) {
+        log.warn(
+            "Configuration drift detected in ${project.key}: " +
+            "missing issue types ${missingTypes.join(', ')}"
+        )
+    }
+}
