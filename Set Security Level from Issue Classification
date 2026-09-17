@@ -1,0 +1,86 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.event.type.EventDispatchOption
+import org.apache.log4j.Logger
+
+def log = Logger.getLogger("com.acme.security.classification")
+
+def issue = event.issue
+
+if (!issue || issue.projectObject?.key != "POLLUS") {
+    return
+}
+
+def customFieldManager = ComponentAccessor.customFieldManager
+def issueSecurityLevelManager = ComponentAccessor.issueSecurityLevelManager
+def issueManager = ComponentAccessor.issueManager
+def authenticationContext = ComponentAccessor.jiraAuthenticationContext
+def issueIndexingService = ComponentAccessor.issueIndexingService
+
+def classificationField = customFieldManager.getCustomFieldObjectByName("Data Classification")
+
+if (!classificationField) {
+    log.error("Data Classification custom field was not found")
+    return
+}
+
+def rawClassification = issue.getCustomFieldValue(classificationField)
+def classification = rawClassification?.toString()
+
+if (!classification) {
+    return
+}
+
+def securityLevelNames = [
+    "Public"      : "Public",
+    "Internal"    : "Internal",
+    "Confidential": "Confidential",
+    "Restricted"  : "Restricted"
+]
+
+def targetSecurityName = securityLevelNames[classification]
+
+if (!targetSecurityName) {
+    log.warn("No security mapping configured for classification '${classification}' on ${issue.key}")
+    return
+}
+
+// Fetch security levels specifically attached to the project's issue security scheme
+def projectScheme = issue.projectObject?.issueSecurityScheme
+if (!projectScheme) {
+    log.error("No Issue Security Scheme configured for project ${issue.projectObject?.key}")
+    return
+}
+
+def securityLevels = issueSecurityLevelManager.getSchemeIssueSecurityLevels(projectScheme.id)
+def targetSecurityLevel = securityLevels.find { it.name == targetSecurityName }
+
+if (!targetSecurityLevel) {
+    log.error("Security level '${targetSecurityName}' was not found in scheme for ${issue.key}")
+    return
+}
+
+if (issue.securityLevelId == targetSecurityLevel.id) {
+    return
+}
+
+def currentUser = authenticationContext.loggedInUser
+
+if (!currentUser) {
+    log.error("Unable to identify user for security update on ${issue.key}")
+    return
+}
+
+// Apply changes
+issue.setSecurityLevelId(targetSecurityLevel.id)
+
+issueManager.updateIssue(
+    currentUser,
+    issue,
+    EventDispatchOption.DO_NOT_DISPATCH,
+    false
+)
+
+// Reindex issue so security level changes immediately take effect in JQL & UI
+issueIndexingService.reIndex(issue)
+
+log.info("Security level for ${issue.key} set to '${targetSecurityName}' based on classification '${classification}'")
