@@ -1,0 +1,54 @@
+def issueTypeField = getFieldById("issuetype")
+
+def environmentField = getFieldById("environment")
+def stepsField = getFieldByName("Steps to Reproduce")
+def changeReasonField = getFieldByName("Change Reason")
+def implementationPlanField = getFieldByName("Implementation Plan")
+def acceptanceCriteriaField = getFieldByName("Acceptance Criteria")
+
+if (!issueTypeField) {
+    return
+}
+
+def rawIssueType = issueTypeField.getValue()
+def issueTypeName = ""
+
+if (rawIssueType instanceof Map) {
+    issueTypeName = rawIssueType.name?.toString()
+} else if (rawIssueType) {
+    issueTypeName = rawIssueType.toString()
+}
+
+if (issueTypeField.getFormValue() instanceof com.atlassian.jira.issue.issuetype.IssueType) {
+    issueTypeName = ((com.atlassian.jira.issue.issuetype.IssueType) issueTypeField.getFormValue()).name
+}
+
+def targetFields = [
+    environmentField,
+    stepsField,
+    changeReasonField,
+    implementationPlanField,
+    acceptanceCriteriaField
+].findAll { it }
+
+targetFields.each {
+    it.setRequired(false)
+    it.setHidden(false)
+}
+
+// Apply mandatory field requirements based on issue type name
+switch (issueTypeName) {
+    case "Bug":
+        environmentField?.setRequired(true)
+        stepsField?.setRequired(true)
+        break
+
+    case "Change":
+        changeReasonField?.setRequired(true)
+        implementationPlanField?.setRequired(true)
+        break
+
+    case "Task":
+        acceptanceCriteriaField?.setRequired(true)
+        break
+}
