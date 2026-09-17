@@ -1,0 +1,60 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.user.ApplicationUser
+
+def defectPriorityField = getFieldByName("Defect Priority")
+def supportManagerField = getFieldByName("Support Component Manager")
+def triageManagerField = getFieldByName("Engineering Triage Manager")
+
+if (!defectPriorityField) {
+    return
+}
+
+def issueContextProject = issueContext?.projectObject
+
+if (!issueContextProject || issueContextProject.key != "SLOT") {
+    return
+}
+
+def currentUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+
+if (!currentUser) {
+    defectPriorityField.setReadOnly(true)
+    defectPriorityField.setHelpText("The current user could not be identified.")
+    return
+}
+
+def getUsernameVal = { field ->
+    def rawVal = field?.getValue()
+    if (rawVal instanceof ApplicationUser) {
+        return rawVal.username
+    }
+    return rawVal ? rawVal.toString() : null
+}
+
+def supportManagerName = getUsernameVal(supportManagerField)
+def triageManagerName = getUsernameVal(triageManagerField)
+
+def isSupportManager = supportManagerName && currentUser.username == supportManagerName
+def isTriageManager = triageManagerName && currentUser.username == triageManagerName
+
+def currentStatus = underlyingIssue?.status?.name ?: "New"
+
+def editableStatuses = [
+    "New",
+    "In Support Review"
+]
+
+def isEditableStatus = currentStatus in editableStatuses
+
+def canEdit = isSupportManager || isTriageManager || isEditableStatus
+
+if (canEdit) {
+    defectPriorityField.setReadOnly(false)
+    defectPriorityField.clearHelpText()
+} else {
+    defectPriorityField.setReadOnly(true)
+    defectPriorityField.setHelpText(
+        "Defect Priority can only be changed by the Support Component Manager, " +
+        "Engineering Triage Manager, or while the issue is in New or In Support Review."
+    )
+}
