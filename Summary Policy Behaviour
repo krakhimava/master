@@ -1,0 +1,47 @@
+import com.atlassian.jira.issue.priority.Priority
+
+def summaryField = getFieldById("summary")
+def priorityField = getFieldById("priority")
+
+if (summaryField == null) {
+    return
+}
+
+def summary = summaryField.getValue()?.toString()
+
+summaryField.clearError()
+
+if (!summary?.trim()) {
+    return
+}
+
+def priorityValue = priorityField?.getValue()
+def priority = (priorityValue instanceof Priority) ? priorityValue.name : priorityValue?.toString()
+
+def errors = []
+def normalized = summary.trim()
+
+if (normalized.length() < 15 || normalized.length() > 120) {
+    errors << "Summary must contain between 15 and 120 characters."
+}
+
+if (summary != normalized) {
+    errors << "Summary must not start or end with whitespace."
+}
+
+if (summary.find(/[\r\n\t]/) != null) {
+    errors << "Summary must be a single line without tabs."
+}
+
+def words = normalized.toLowerCase().findAll(/[\p{L}\p{N}]+/)
+if (words.collate(2, 1, false).any { pair -> pair[0] == pair[1] }) {
+    errors << "Summary contains consecutive duplicate words."
+}
+
+if (priority in ["Highest", "High"] && normalized.length() < 25) {
+    errors << "High-priority issues require a more descriptive summary of at least 25 characters."
+}
+
+if (errors) {
+    summaryField.setError(errors.unique().join(" "))
+}
