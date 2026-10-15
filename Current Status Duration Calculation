@@ -1,0 +1,45 @@
+import com.atlassian.jira.component.ComponentAccessor
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
+
+if (issue == null) {
+    return null
+}
+
+def historyManager = ComponentAccessor.getChangeHistoryManager()
+def statusChanges = historyManager.getChangeItemsForField(issue, "status")
+
+def lastStatusChange = statusChanges
+        ?.findAll { it.created != null }
+        ?.max { it.created.time }
+        ?.created
+
+def startDate = (lastStatusChange ?: issue.created)?.toInstant()
+        ?.atZone(ZoneId.systemDefault())
+        ?.toLocalDate()
+
+if (startDate == null) {
+    return null
+}
+
+def endDate = LocalDate.now(ZoneId.systemDefault())
+
+if (startDate.isAfter(endDate)) {
+    return 0d
+}
+
+long totalDays = ChronoUnit.DAYS.between(startDate, endDate)
+long businessDays = (totalDays.intdiv(7)) * 5
+
+int remainingDays = (int) (totalDays % 7)
+int startDay = startDate.dayOfWeek.value
+
+for (int i = 0; i < remainingDays; i++) {
+    int dayOfWeek = ((startDay - 1 + i) % 7) + 1
+    if (dayOfWeek <= 5) {
+        businessDays++
+    }
+}
+
+return businessDays as Double
