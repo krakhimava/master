@@ -1,0 +1,68 @@
+import com.atlassian.jira.bc.project.component.ProjectComponent
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.issuetype.IssueType
+
+def issueTypeField = getFieldById("issuetype")
+def priorityField = getFieldById("priority")
+def componentsField = getFieldById("components")
+
+if (!priorityField) {
+    return
+}
+
+def constantsManager = ComponentAccessor.constantsManager
+
+// Safely resolve Issue Type name
+def rawIssueType = issueTypeField?.getValue()
+def issueTypeName = ""
+
+if (rawIssueType instanceof IssueType) {
+    issueTypeName = rawIssueType.name
+} else if (rawIssueType) {
+    def resolvedType = constantsManager.getIssueType(rawIssueType.toString())
+    issueTypeName = resolvedType ? resolvedType.name : rawIssueType.toString()
+}
+
+if (!issueTypeName) {
+    priorityField.setReadOnly(false)
+    return
+}
+
+// Safely resolve Component names
+def rawComponents = componentsField?.getValue()
+def componentList = (rawComponents instanceof Collection) ? rawComponents : (rawComponents ? [rawComponents] : [])
+def projectComponentManager = ComponentAccessor.projectComponentManager
+
+def componentNames = componentList.collect { item ->
+    if (item instanceof ProjectComponent) {
+        return item.name
+    } else if (item?.toString()?.isLong()) {
+        return projectComponentManager.find(item.toString().toLong())?.name
+    }
+    return item?.toString()
+}.findAll { it }
+
+boolean isProduction = componentNames.any {
+    it.toLowerCase().contains("production")
+}
+
+boolean isBug = issueTypeName.equalsIgnoreCase("Bug")
+
+// Look up Priority IDs dynamically
+def highestPriorityId = constantsManager.priorities.find { it.name.equalsIgnoreCase("Highest") }?.id
+def highPriorityId = constantsManager.priorities.find { it.name.equalsIgnoreCase("High") }?.id
+
+if (isBug && isProduction) {
+    if (highestPriorityId) {
+        priorityField.setFormValue(highestPriorityId)
+    }
+    priorityField.setReadOnly(true)
+} else if (isBug) {
+    priorityField.setReadOnly(false)
+    // Only default to High on issue creation so existing priorities aren't overwritten on edit
+    if (!underlyingIssue && highPriorityId) {
+        priorityField.setFormValue(highPriorityId)
+    }
+} else {
+    priorityField.setReadOnly(false)
+}
