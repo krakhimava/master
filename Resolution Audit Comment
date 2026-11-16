@@ -1,0 +1,31 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+def commentManager = ComponentAccessor.getCommentManager()
+def authContext = ComponentAccessor.getJiraAuthenticationContext()
+
+def currentUser = authContext.loggedInUser
+
+if (issue == null || currentUser == null) {
+    return
+}
+
+def resolution = issue.resolution
+
+if (resolution == null) {
+    log.warn("Issue ${issue.key} has no resolution during the workflow transition. Ensure this post-function runs AFTER system update post-functions.")
+    return
+}
+
+def comment = """Resolution recorded by ${currentUser.displayName}
+
+Issue: ${issue.key}
+Resolution: ${resolution.name}
+Transition time: ${new Date().format("yyyy-MM-dd HH:mm:ss")}
+"""
+
+commentManager.create(
+    issue,
+    currentUser,
+    comment,
+    false
+)
