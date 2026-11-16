@@ -1,0 +1,52 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.label.LabelManager
+
+def issue = event.issue
+if (!issue) {
+    return
+}
+
+def changeHistoryManager = ComponentAccessor.changeHistoryManager
+def changeItems = changeHistoryManager.getChangeItemsForField(issue, "status")
+
+def latestStatusChange = changeItems
+        ?.findAll { it.created != null }
+        ?.max { it.created.time }
+
+if (!latestStatusChange) {
+    return
+}
+
+def newStatus = latestStatusChange.getToString()
+if (!newStatus) {
+    return
+}
+
+def labelToAdd = null
+
+switch (newStatus) {
+    case "Done":
+        labelToAdd = "completed"
+        break
+    case "In Progress":
+        labelToAdd = "WIP"
+        break
+    case "Blocked":
+        labelToAdd = "blocked"
+        break
+}
+
+def existingLabels = issue.labels.collect { it.label }
+
+if (!labelToAdd || existingLabels.contains(labelToAdd)) {
+    return
+}
+
+def loggedInUser = ComponentAccessor.jiraAuthenticationContext.loggedInUser
+if (!loggedInUser) {
+    log.warn("No logged-in user found to add label '${labelToAdd}' to ${issue.key}")
+    return
+}
+
+def labelManager = ComponentAccessor.getComponent(LabelManager)
+labelManager.addLabel(loggedInUser, issue.id, labelToAdd, false)
